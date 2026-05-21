@@ -1,4 +1,4 @@
-package com.example
+package com.kasumic.vpndetector
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -38,8 +38,8 @@ import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.scanner.ScanResult
-import com.example.ui.theme.MyApplicationTheme
+import com.kasumic.vpndetector.scanner.ScanResult
+import com.kasumic.vpndetector.ui.theme.MyApplicationTheme
 
 data class AppColors(
     val background: Color,

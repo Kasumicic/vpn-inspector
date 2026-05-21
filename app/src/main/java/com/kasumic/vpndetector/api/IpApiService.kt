@@ -1,4 +1,4 @@
-package com.example.api
+package com.kasumic.vpndetector.api
 
 import retrofit2.http.GET
 import retrofit2.http.Query

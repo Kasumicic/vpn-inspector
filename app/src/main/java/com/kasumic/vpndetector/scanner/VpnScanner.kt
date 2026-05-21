@@ -1,10 +1,10 @@
-package com.example.scanner
+package com.kasumic.vpndetector.scanner
 
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
-import com.example.api.NetworkClient
+import com.kasumic.vpndetector.api.NetworkClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.NetworkInterface
