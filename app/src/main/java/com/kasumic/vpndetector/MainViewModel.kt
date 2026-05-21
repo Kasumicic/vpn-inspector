@@ -1,11 +1,11 @@
-package com.example
+package com.kasumic.vpndetector
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.scanner.ScanResult
-import com.example.scanner.ScanCategory
-import com.example.scanner.VpnScanner
+import com.kasumic.vpndetector.scanner.ScanResult
+import com.kasumic.vpndetector.scanner.ScanCategory
+import com.kasumic.vpndetector.scanner.VpnScanner
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

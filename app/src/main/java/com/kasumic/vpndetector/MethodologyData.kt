@@ -1,4 +1,4 @@
-package com.example
+package com.kasumic.vpndetector
 
 object MethodologyData {
     val text = """
