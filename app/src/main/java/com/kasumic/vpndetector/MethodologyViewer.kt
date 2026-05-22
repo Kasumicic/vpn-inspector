@@ -212,7 +212,7 @@ fun MethodologyViewerScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Источник: Профсоюз работников IP",
+                            text = "Источник: Профсоюз работников IT",
                             color = colors.primaryAction,
                             modifier = Modifier.clickable {
                                 uriHandler.openUri("https://t.me/ruitunion/893")
