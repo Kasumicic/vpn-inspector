@@ -58,7 +58,10 @@ fun parseMethodologyMarkdown(text: String): List<MethodologySection> {
 
 sealed class MarkdownElement {
     data class TextElement(val text: androidx.compose.ui.text.AnnotatedString) : MarkdownElement()
-    data class TableElement(val headers: List<String>, val rows: List<List<String>>) : MarkdownElement()
+    data class TableElement(
+        val headers: List<androidx.compose.ui.text.AnnotatedString>, 
+        val rows: List<List<androidx.compose.ui.text.AnnotatedString>>
+    ) : MarkdownElement()
 }
 
 fun parseMarkdownElements(content: String, colors: AppColors): List<MarkdownElement> {
@@ -68,8 +71,8 @@ fun parseMarkdownElements(content: String, colors: AppColors): List<MarkdownElem
     val currentText = StringBuilder()
     
     var inTable = false
-    var tableHeaders = listOf<String>()
-    val tableRows = mutableListOf<List<String>>()
+    var tableHeaders = listOf<androidx.compose.ui.text.AnnotatedString>()
+    val tableRows = mutableListOf<List<androidx.compose.ui.text.AnnotatedString>>()
 
     fun flushText() {
         if (currentText.isNotEmpty()) {
@@ -84,12 +87,12 @@ fun parseMarkdownElements(content: String, colors: AppColors): List<MarkdownElem
                 flushText()
                 inTable = true
                 val cols = line.split("|").map { it.trim() }.filter { it.isNotEmpty() }
-                tableHeaders = cols
+                tableHeaders = cols.map { formatMarkdownContent(it, colors) }
             } else {
                 if (line.contains("---")) continue // Skip separator
                 val cols = line.split("|").map { it.trim() }.filter { it.isNotEmpty() }
                 if (cols.isNotEmpty()) {
-                    tableRows.add(cols)
+                    tableRows.add(cols.map { formatMarkdownContent(it, colors) })
                 }
             }
         } else {
@@ -193,7 +196,38 @@ fun MethodologyViewerScreen(
             contentPadding = PaddingValues(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(sections) { section ->
+            item {
+                val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = colors.primaryAction.copy(alpha = 0.1f)),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Методика выявления признаков использования средств обхода блокировок на клиентских устройствах. Распознанный текст в формате Markdown.",
+                            color = colors.secondaryText,
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Источник: Профсоюз работников IP",
+                            color = colors.primaryAction,
+                            modifier = Modifier.clickable {
+                                uriHandler.openUri("https://t.me/ruitunion/893")
+                            }.padding(vertical = 4.dp),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
+                        )
+                    }
+                }
+            }
+            items(
+                items = sections,
+                key = { it.title }
+            ) { section ->
                 ExpandableMethodologySection(section = section, colors = colors)
             }
         }
@@ -282,7 +316,7 @@ fun MarkdownTable(table: MarkdownElement.TableElement, colors: AppColors) {
         ) {
             table.headers.forEach { header ->
                 Text(
-                    text = header.replace("**", ""), // Basic bold clean
+                    text = header,
                     modifier = Modifier.weight(1f).padding(4.dp),
                     fontWeight = FontWeight.Bold,
                     color = colors.primaryText,
@@ -300,7 +334,7 @@ fun MarkdownTable(table: MarkdownElement.TableElement, colors: AppColors) {
             ) {
                 row.forEach { cellText ->
                     Text(
-                        text = cellText.replace("`", ""),
+                        text = cellText,
                         modifier = Modifier.weight(1f).padding(4.dp),
                         color = colors.secondaryText,
                         fontSize = 12.sp

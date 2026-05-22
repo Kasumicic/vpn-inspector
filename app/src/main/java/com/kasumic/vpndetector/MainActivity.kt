@@ -98,8 +98,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val sharedPrefs = getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
+
         setContent {
-            var isDarkTheme by remember { mutableStateOf(true) }
+            var isDarkTheme by remember { mutableStateOf(sharedPrefs.getBoolean("is_dark_theme", true)) }
             val colors = if (isDarkTheme) DarkAppColors else LightAppColors
 
             CompositionLocalProvider(LocalAppColors provides colors) {
@@ -108,7 +110,10 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         color = colors.background
                     ) {
-                        MainScreen(isDarkTheme, { isDarkTheme = it })
+                        MainScreen(isDarkTheme) { newTheme ->
+                            isDarkTheme = newTheme
+                            sharedPrefs.edit().putBoolean("is_dark_theme", newTheme).apply()
+                        }
                     }
                 }
             }
@@ -182,7 +187,7 @@ fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Uni
         Spacer(modifier = Modifier.height(16.dp))
         Text("VPN Inspector", fontSize = 24.sp, color = colors.primaryText, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-        Text("Версия 1.2", textAlign = TextAlign.Center, color = colors.secondaryText)
+        Text("Версия 1.3", textAlign = TextAlign.Center, color = colors.secondaryText)
         
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -227,6 +232,7 @@ fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Uni
         Column(modifier = Modifier.fillMaxWidth()) {
             MethodologyBullet("• GeoIP", "Анализ на стороне сервера. Сравнение IP с репутационными базами.", colors)
             MethodologyBullet("• Прямые признаки", "Опрос системного API Android на наличие VPN транспорта и поиск установленных VPN-пакетов.", colors)
+            MethodologyBullet("• Сетевые задержки", "Измерение RTT (SNITCH) до локальных и зарубежных узлов.", colors)
             MethodologyBullet("• Интерфейсы", "Поиск виртуальных адаптеров туннелирования (tun, tap, wg).", colors)
             MethodologyBullet("• Аномалии MTU", "Анализ размера кадра (MTU) на следы инкапсуляции VPN-заголовков.", colors)
             MethodologyBullet("• Локальные Proxy", "Проверка стандартных портов, открываемых клиентскими proxy.", colors)
@@ -465,7 +471,10 @@ fun ResultsList(results: List<ScanResult>, modifier: Modifier = Modifier, onResu
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(results) { result ->
+        items(
+            items = results,
+            key = { it.moduleName }
+        ) { result ->
             ResultItem(result, onResultClick)
         }
     }

@@ -72,6 +72,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
 
             scanResults.add(scanner.checkFakeIp())
+            _uiState.value = _uiState.value.copy(results = scanResults.toList())
+
+            scanResults.add(scanner.analyzeLatency())
             
             // Calculate final verdict based on methodology table
             val hasGeoRisk = scanResults.any { it.category == ScanCategory.GEO && it.isRisky }
