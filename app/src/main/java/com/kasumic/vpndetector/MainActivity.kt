@@ -283,25 +283,15 @@ fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Uni
     }
 
     if (showMethodology) {
-        AlertDialog(
+        androidx.compose.ui.window.Dialog(
             onDismissRequest = { showMethodology = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            containerColor = colors.background,
-            title = {
-                Text("Официальная Методика", color = colors.primaryText, fontWeight = FontWeight.Bold)
-            },
-            text = {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    Text(MethodologyData.text, color = colors.secondaryText, fontSize = 14.sp)
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showMethodology = false }) {
-                    Text("Закрыть", color = colors.secondaryActionText, fontWeight = FontWeight.Bold)
-                }
-            }
-        )
+            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            MethodologyViewerScreen(
+                onDismiss = { showMethodology = false },
+                colors = colors
+            )
+        }
     }
 }
 
