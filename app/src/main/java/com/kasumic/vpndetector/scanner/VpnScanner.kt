@@ -29,20 +29,22 @@ class VpnScanner(private val context: Context) {
         var ip = "Unknown"
         try {
             val response = NetworkClient.ipApiService.getIpInfo()
-            if (response.status == "success") {
-                ip = response.query ?: "Unknown"
-                val proxyStr = if (response.proxy == true) "Да" else "Нет"
-                val hostingStr = if (response.hosting == true) "Да" else "Нет"
-                val countryCode = response.countryCode ?: "Неизвестно"
+            if (response.success == true) {
+                ip = response.ip ?: "Unknown"
+                val isProxy = response.security?.proxy == true || response.security?.vpn == true || response.security?.tor == true
+                val isHosting = response.security?.hosting == true
+                val proxyStr = if (isProxy) "Да" else "Нет"
+                val hostingStr = if (isHosting) "Да" else "Нет"
+                val countryCode = response.country_code ?: "Неизвестно"
                 val notRussia = countryCode != "RU"
 
-                val isRisky = (response.proxy == true) || (response.hosting == true) || notRussia
+                val isRisky = isProxy || isHosting || notRussia
                 results.add(
                     ScanResult(
                         category = ScanCategory.GEO,
                         moduleName = "Анализ IP (GeoIP)",
                         isRisky = isRisky,
-                        details = if (isRisky) "Подозрительный IP:\nСтрана: $countryCode\nProxy: $proxyStr\nХостинг: $hostingStr" else "Чистый IP (Ожидаемый регион)",
+                        details = if (isRisky) "Подозрительный IP:\nСтрана: $countryCode\nProxy/VPN: $proxyStr\nХостинг: $hostingStr" else "Чистый IP (Ожидаемый регион)",
                         description = "Метод определяет использование VPN на стороне сервера, сравнивая IP с репутационными базами (GeoIP).",
                         fixSuggestion = if (isRisky) "Используйте резидентные прокси или настройте маршрутизацию (Split Tunneling) на российские IP адреса, чтобы локальный трафик шел напрямую, минуя проверку GeoIP." else "Обход надежно скрыт на уровне GeoIP."
                     )

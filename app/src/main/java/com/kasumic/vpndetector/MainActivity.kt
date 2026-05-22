@@ -182,7 +182,7 @@ fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Uni
         Spacer(modifier = Modifier.height(16.dp))
         Text("VPN Inspector", fontSize = 24.sp, color = colors.primaryText, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-        Text("Версия 1.1", textAlign = TextAlign.Center, color = colors.secondaryText)
+        Text("Версия 1.2", textAlign = TextAlign.Center, color = colors.secondaryText)
         
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -545,4 +545,3 @@ fun ScanButton(isScanning: Boolean, onScanClick: () -> Unit) {
         )
     }
 }
-
