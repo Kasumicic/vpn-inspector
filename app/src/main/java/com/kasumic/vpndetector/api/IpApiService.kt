@@ -5,30 +5,35 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
+import okhttp3.OkHttpClient
+import java.util.concurrent.TimeUnit
 
-data class SecurityInfo(
-    val proxy: Boolean?,
-    val vpn: Boolean?,
-    val tor: Boolean?,
-    val hosting: Boolean?
-)
+import okhttp3.Interceptor
+import okhttp3.Response
+import okhttp3.Dns
+import java.net.InetAddress
+import java.net.Inet6Address
 
-data class ConnectionInfo(
-    val isp: String?
+data class CountryInfo(
+    val iso: String?
 )
 
 data class IpApiResponse(
-    val success: Boolean?,
     val ip: String?,
-    val country: String?,
-    val country_code: String?,
-    val security: SecurityInfo?,
-    val connection: ConnectionInfo?
+    val country: CountryInfo?
 )
 
 interface IpApiService {
-    @GET("/")
+    @GET("json/")
     suspend fun getIpInfo(): IpApiResponse
+}
+
+class IPv6FirstDns : Dns {
+    override fun lookup(hostname: String): List<InetAddress> {
+        return Dns.SYSTEM.lookup(hostname).sortedBy {
+            if (it is Inet6Address) 0 else 1
+        }
+    }
 }
 
 object NetworkClient {
@@ -36,8 +41,25 @@ object NetworkClient {
         .add(KotlinJsonAdapterFactory())
         .build()
 
+    private val userAgentInterceptor = Interceptor { chain ->
+        val originalRequest = chain.request()
+        val requestWithUserAgent = originalRequest.newBuilder()
+            .header("User-Agent", "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
+            .build()
+        chain.proceed(requestWithUserAgent)
+    }
+
+    val okHttpClient = OkHttpClient.Builder()
+        .addInterceptor(userAgentInterceptor)
+        .dns(IPv6FirstDns())
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(15, TimeUnit.SECONDS)
+        .writeTimeout(15, TimeUnit.SECONDS)
+        .build()
+
     private val retrofit = Retrofit.Builder()
-        .baseUrl("https://ipwho.is/")
+        .baseUrl("https://api.sypexgeo.net/")
+        .client(okHttpClient)
         .addConverterFactory(MoshiConverterFactory.create(moshi))
         .build()
 

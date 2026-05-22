@@ -19,7 +19,8 @@ data class ScanResult(
     val isRisky: Boolean,
     val details: String,
     val description: String,
-    val fixSuggestion: String
+    val fixSuggestion: String,
+    val isError: Boolean = false
 )
 
 class VpnScanner(private val context: Context) {
@@ -29,31 +30,36 @@ class VpnScanner(private val context: Context) {
         var ip = "Unknown"
         try {
             val response = NetworkClient.ipApiService.getIpInfo()
-            if (response.success == true) {
-                ip = response.ip ?: "Unknown"
-                val isProxy = response.security?.proxy == true || response.security?.vpn == true || response.security?.tor == true
-                val isHosting = response.security?.hosting == true
-                val proxyStr = if (isProxy) "Да" else "Нет"
-                val hostingStr = if (isHosting) "Да" else "Нет"
-                val countryCode = response.country_code ?: "Неизвестно"
+            if (response.ip != null) {
+                ip = response.ip
+                val countryCode = response.country?.iso ?: "Неизвестно"
                 val notRussia = countryCode != "RU"
 
-                val isRisky = isProxy || isHosting || notRussia
+                val isRisky = notRussia
                 results.add(
                     ScanResult(
                         category = ScanCategory.GEO,
                         moduleName = "Анализ IP (GeoIP)",
                         isRisky = isRisky,
-                        details = if (isRisky) "Подозрительный IP:\nСтрана: $countryCode\nProxy/VPN: $proxyStr\nХостинг: $hostingStr" else "Чистый IP (Ожидаемый регион)",
-                        description = "Метод определяет использование VPN на стороне сервера, сравнивая IP с репутационными базами (GeoIP).",
-                        fixSuggestion = if (isRisky) "Используйте резидентные прокси или настройте маршрутизацию (Split Tunneling) на российские IP адреса, чтобы локальный трафик шел напрямую, минуя проверку GeoIP." else "Обход надежно скрыт на уровне GeoIP."
+                        details = if (isRisky) "Подозрительный IP:\nСтрана: $countryCode" else "Чистый IP (Ожидаемый регион: $countryCode)",
+                        description = "Метод определяет регион IP на стороне сервера (GeoIP).",
+                        fixSuggestion = if (isRisky) "Используйте резидентные прокси или настройте маршрутизацию (Split Tunneling) на российские IP адреса." else "Обход надежно скрыт на уровне GeoIP."
                     )
                 )
             } else {
-                results.add(ScanResult(ScanCategory.GEO, "Анализ IP", false, "Ошибка сети", "Не удалось получить GeoIP.", ""))
+                results.add(ScanResult(ScanCategory.GEO, "Анализ IP (GeoIP)", false, "Ошибка сети", "Не удалось получить серверный ответ с GeoIP.", "", isError = true))
             }
         } catch (e: Exception) {
-            results.add(ScanResult(ScanCategory.GEO, "Анализ IP", false, "Ошибка: ${e.message}", "Не удалось подключиться API.", ""))
+            try {
+                val request = okhttp3.Request.Builder().url("https://api64.ipify.org").build()
+                val response = NetworkClient.okHttpClient.newCall(request).execute()
+                if (response.isSuccessful) {
+                    ip = response.body?.string()?.trim() ?: ip
+                }
+            } catch (fallbackE: Exception) {
+                // Ignore fallback exception
+            }
+            results.add(ScanResult(ScanCategory.GEO, "Анализ IP (GeoIP)", false, "Ошибка: ${e.message}", "Не удалось подключиться к API.", "", isError = true))
         }
         return@withContext ip to results
     }
