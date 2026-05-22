@@ -16,5 +16,4 @@
 local.properties
 .env
 debug.keystore
-*.jks
-*.keystore
+release.jks
