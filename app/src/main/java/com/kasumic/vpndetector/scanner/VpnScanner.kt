@@ -219,4 +219,40 @@ class VpnScanner(private val context: Context) {
             ScanResult(ScanCategory.INDIRECT, "Подмена Fake-IP", false, "ЧИСТО", "Проверка на выдачу фейковых внутренних IP-адресов популярным серверам (Fake-IP туннелирование).", "")
         }
     }
+
+    suspend fun analyzeLatency(): ScanResult = withContext(Dispatchers.IO) {
+        fun getTcpPing(host: String, port: Int = 80): Int {
+            return try {
+                val address = InetAddress.getByName(host)
+                // Используем nanoTime для точности как perf_counter()
+                val start = System.nanoTime()
+                val socket = Socket()
+                socket.connect(java.net.InetSocketAddress(address, port), 1500)
+                socket.close()
+                val end = System.nanoTime()
+                ((end - start) / 1_000_000).toInt() // В миллисекундах
+            } catch (e: Exception) {
+                999
+            }
+        }
+
+        val pingRu = getTcpPing("ya.ru")
+        val pingEu = getTcpPing("google.com")
+
+        if (pingRu >= 999 && pingEu >= 999) {
+            return@withContext ScanResult(ScanCategory.INDIRECT, "Сетевые задержки (SNITCH)", false, "Таймаут (сеть недоступна)", "Анализ RTT до контрольных точек.", "Сеть недоступна, либо порты заблокированы.")
+        }
+
+        // Если пинг подозрительно мал (0-2мс), значит это перехват прокси (localhost)
+        if (pingRu <= 2 || pingEu <= 2) {
+            return@withContext ScanResult(ScanCategory.INDIRECT, "Сетевые задержки (SNITCH)", true, "ПЕРЕХВАТ ПРОКСИ (RU:${pingRu}ms / EU:${pingEu}ms)", "Слишком низкий пинг (<= 2мс) невозможен в реальной сети и указывает на перехват TCP локальным прокси-сервером.", "Исключите трафик проверочных серверов из TUN/Proxy перехвата (используйте прямую маршрутизацию).")
+        }
+
+        val ratio = pingRu.toFloat() / if (pingEu > 0) pingEu else 1
+        if (ratio > 3f && pingRu > 100) {
+            return@withContext ScanResult(ScanCategory.INDIRECT, "Сетевые задержки (SNITCH)", true, "АНОМАЛИЯ (RU:${pingRu}ms / EU:${pingEu}ms)", "Аномально высокая задержка до локального (RU) узла по сравнению с зарубежным (EU) узлом свидетельствует об использовании VPN.", "Отключите VPN или добавьте локальные хосты (ya.ru) в исключения.")
+        }
+
+        ScanResult(ScanCategory.INDIRECT, "Сетевые задержки (SNITCH)", false, "В пределах нормы (RU:${pingRu}ms / EU:${pingEu}ms)", "Сравнение пинга (TCP RTT) для национальных и зарубежных узлов.", "")
+    }
 }
