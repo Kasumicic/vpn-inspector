@@ -20,11 +20,13 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -98,8 +100,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val sharedPrefs = getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
+
         setContent {
-            var isDarkTheme by remember { mutableStateOf(true) }
+            var isDarkTheme by remember { mutableStateOf(sharedPrefs.getBoolean("is_dark_theme", true)) }
             val colors = if (isDarkTheme) DarkAppColors else LightAppColors
 
             CompositionLocalProvider(LocalAppColors provides colors) {
@@ -108,7 +112,10 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         color = colors.background
                     ) {
-                        MainScreen(isDarkTheme, { isDarkTheme = it })
+                        MainScreen(isDarkTheme) { newTheme ->
+                            isDarkTheme = newTheme
+                            sharedPrefs.edit().putBoolean("is_dark_theme", newTheme).apply()
+                        }
                     }
                 }
             }
@@ -182,7 +189,7 @@ fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Uni
         Spacer(modifier = Modifier.height(16.dp))
         Text("VPN Inspector", fontSize = 24.sp, color = colors.primaryText, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-        Text("Версия 1.2", textAlign = TextAlign.Center, color = colors.secondaryText)
+        Text("Версия 1.3", textAlign = TextAlign.Center, color = colors.secondaryText)
         
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -227,6 +234,7 @@ fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Uni
         Column(modifier = Modifier.fillMaxWidth()) {
             MethodologyBullet("• GeoIP", "Анализ на стороне сервера. Сравнение IP с репутационными базами.", colors)
             MethodologyBullet("• Прямые признаки", "Опрос системного API Android на наличие VPN транспорта и поиск установленных VPN-пакетов.", colors)
+            MethodologyBullet("• Сетевые задержки", "Измерение RTT (SNITCH) до локальных и зарубежных узлов.", colors)
             MethodologyBullet("• Интерфейсы", "Поиск виртуальных адаптеров туннелирования (tun, tap, wg).", colors)
             MethodologyBullet("• Аномалии MTU", "Анализ размера кадра (MTU) на следы инкапсуляции VPN-заголовков.", colors)
             MethodologyBullet("• Локальные Proxy", "Проверка стандартных портов, открываемых клиентскими proxy.", colors)
@@ -283,25 +291,15 @@ fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Uni
     }
 
     if (showMethodology) {
-        AlertDialog(
+        androidx.compose.ui.window.Dialog(
             onDismissRequest = { showMethodology = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            containerColor = colors.background,
-            title = {
-                Text("Официальная Методика", color = colors.primaryText, fontWeight = FontWeight.Bold)
-            },
-            text = {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    Text(MethodologyData.text, color = colors.secondaryText, fontSize = 14.sp)
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showMethodology = false }) {
-                    Text("Закрыть", color = colors.secondaryActionText, fontWeight = FontWeight.Bold)
-                }
-            }
-        )
+            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            MethodologyViewerScreen(
+                onDismiss = { showMethodology = false },
+                colors = colors
+            )
+        }
     }
 }
 
@@ -341,8 +339,8 @@ fun VpnScannerApp(viewModel: MainViewModel = viewModel()) {
         
         Spacer(modifier = Modifier.height(16.dp))
 
-        ScanButton(
-            isScanning = uiState.isScanning,
+        ScanAndActions(
+            uiState = uiState,
             onScanClick = { viewModel.startScan() }
         )
     }
@@ -372,7 +370,12 @@ fun ResultDetailsDialog(result: ScanResult, onDismiss: () -> Unit) {
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text("Показания:", fontWeight = FontWeight.Bold, color = colors.secondaryActionText)
-                Text(result.details, color = if(result.isRisky) colors.error else colors.success, fontSize = 14.sp)
+                val detailColor = when {
+                    result.isRisky -> colors.error
+                    result.isError -> colors.warning
+                    else -> colors.success
+                }
+                Text(result.details, color = detailColor, fontSize = 14.sp)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 if (result.isRisky && result.fixSuggestion.isNotEmpty()) {
@@ -392,6 +395,8 @@ fun ResultDetailsDialog(result: ScanResult, onDismiss: () -> Unit) {
 @Composable
 fun HeaderSection(ipAddress: String) {
     val colors = LocalAppColors.current
+    var isBlurred by remember { mutableStateOf(true) }
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = "VPN INSPECTOR",
@@ -401,11 +406,22 @@ fun HeaderSection(ipAddress: String) {
             letterSpacing = 1.5.sp
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Текущий IP: $ipAddress",
-            color = colors.secondaryText,
-            fontSize = 16.sp
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.clickable { isBlurred = !isBlurred }.padding(8.dp)
+        ) {
+            Text(
+                text = "Текущий IP: ",
+                color = colors.secondaryText,
+                fontSize = 16.sp
+            )
+            Text(
+                text = if (isBlurred) "•".repeat(ipAddress.length.coerceAtLeast(10)) else ipAddress,
+                color = colors.primaryText,
+                fontSize = 16.sp,
+                modifier = if (isBlurred) Modifier.blur(4.dp) else Modifier
+            )
+        }
     }
 }
 
@@ -414,7 +430,7 @@ fun StatusCard(uiState: ScannerUiState) {
     val colors = LocalAppColors.current
 
     val statusText = when {
-        uiState.isScanning -> "Идет сканирование..."
+        uiState.isScanning -> uiState.currentScanStatus
         !uiState.scanCompleted -> "Система готова.\nНажмите для анализа."
         uiState.decision == DecisionState.DETECTED -> "ОБНАРУЖЕН ОБХОД"
         uiState.decision == DecisionState.NEEDS_CHECK -> "ТРЕБУЕТСЯ ПРОВЕРКА"
@@ -475,7 +491,10 @@ fun ResultsList(results: List<ScanResult>, modifier: Modifier = Modifier, onResu
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(results) { result ->
+        items(
+            items = results,
+            key = { it.moduleName }
+        ) { result ->
             ResultItem(result, onResultClick)
         }
     }
@@ -484,8 +503,16 @@ fun ResultsList(results: List<ScanResult>, modifier: Modifier = Modifier, onResu
 @Composable
 fun ResultItem(result: ScanResult, onClick: (ScanResult) -> Unit) {
     val colors = LocalAppColors.current
-    val iconColor = if (result.isRisky) colors.error else colors.success
-    val icon = if (result.isRisky) Icons.Default.Warning else Icons.Default.CheckCircle
+    val iconColor = when {
+        result.isRisky -> colors.error
+        result.isError -> colors.warning
+        else -> colors.success
+    }
+    val icon = when {
+        result.isRisky -> Icons.Default.Warning
+        result.isError -> Icons.Default.Warning
+        else -> Icons.Default.CheckCircle
+    }
 
     Row(
         modifier = Modifier
@@ -521,27 +548,64 @@ fun ResultItem(result: ScanResult, onClick: (ScanResult) -> Unit) {
     }
 }
 
+fun formatScanSummary(uiState: ScannerUiState): String {
+    val sb = StringBuilder()
+    sb.append("🔍 VPN Inspector Scan Report\n\n")
+    sb.append("Итоговый статус: ")
+    when (uiState.decision) {
+        DecisionState.DETECTED -> sb.append("🔴 ОБНАРУЖЕН ОБХОД\n")
+        DecisionState.NEEDS_CHECK -> sb.append("🟡 ТРЕБУЕТСЯ ПРОВЕРКА\n")
+        else -> sb.append("🟢 СИСТЕМА ЧИСТА\n")
+    }
+    sb.append("Trust Score: ${uiState.trustScore}%\n\n")
+    sb.append("Результаты проверок:\n")
+    for (result in uiState.results) {
+        val icon = when {
+            result.isRisky -> "🔴"
+            result.isError -> "🟡"
+            else -> "🟢"
+        }
+        sb.append("$icon ${result.moduleName}: ${result.details}\n")
+    }
+    return sb.toString()
+}
+
 @Composable
-fun ScanButton(isScanning: Boolean, onScanClick: () -> Unit) {
+fun ScanAndActions(uiState: ScannerUiState, onScanClick: () -> Unit) {
     val colors = LocalAppColors.current
-    Button(
-        onClick = onScanClick,
-        enabled = !isScanning,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = colors.primaryAction,
-            contentColor = colors.primaryActionText,
-            disabledContainerColor = colors.border,
-            disabledContentColor = colors.secondaryText
-        ),
-        shape = RoundedCornerShape(28.dp)
-    ) {
-        Text(
-            text = if (isScanning) "Анализ в процессе..." else "ЗАПУСТИТЬ ПРОВЕРКУ",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold
-        )
+    val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    Row(modifier = Modifier.fillMaxWidth().height(56.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button(
+            onClick = onScanClick,
+            enabled = !uiState.isScanning,
+            modifier = Modifier.weight(1f).fillMaxHeight(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = colors.primaryAction,
+                contentColor = colors.primaryActionText,
+                disabledContainerColor = colors.border,
+                disabledContentColor = colors.secondaryText
+            ),
+            shape = RoundedCornerShape(28.dp)
+        ) {
+            Text(
+                text = if (uiState.isScanning) "Анализ в процессе..." else "ЗАПУСТИТЬ ПРОВЕРКУ",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+        
+        if (uiState.scanCompleted && !uiState.isScanning) {
+            IconButton(
+                onClick = {
+                    clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(formatScanSummary(uiState)))
+                    android.widget.Toast.makeText(context, "Результат скопирован", android.widget.Toast.LENGTH_SHORT).show()
+                },
+                modifier = Modifier.size(56.dp).background(colors.surface, RoundedCornerShape(16.dp))
+            ) {
+                Icon(Icons.Default.Share, contentDescription = "Поделиться", tint = colors.primaryAction)
+            }
+        }
     }
 }
