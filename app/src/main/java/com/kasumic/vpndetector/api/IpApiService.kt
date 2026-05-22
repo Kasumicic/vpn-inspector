@@ -1,33 +1,44 @@
 package com.kasumic.vpndetector.api
 
 import retrofit2.http.GET
-import retrofit2.http.Query
-import com.squareup.moshi.JsonClass
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 
-@JsonClass(generateAdapter = true)
-data class IpApiResponse(
-    val status: String?,
-    val query: String?,
-    val country: String?,
-    val countryCode: String?,
+data class SecurityInfo(
     val proxy: Boolean?,
-    val hosting: Boolean?,
+    val vpn: Boolean?,
+    val tor: Boolean?,
+    val hosting: Boolean?
+)
+
+data class ConnectionInfo(
     val isp: String?
 )
 
+data class IpApiResponse(
+    val success: Boolean?,
+    val ip: String?,
+    val country: String?,
+    val country_code: String?,
+    val security: SecurityInfo?,
+    val connection: ConnectionInfo?
+)
+
 interface IpApiService {
-    @GET("json/")
-    suspend fun getIpInfo(
-        @Query("fields") fields: String = "status,query,country,countryCode,proxy,hosting,isp"
-    ): IpApiResponse
+    @GET("/")
+    suspend fun getIpInfo(): IpApiResponse
 }
 
 object NetworkClient {
+    private val moshi = Moshi.Builder()
+        .add(KotlinJsonAdapterFactory())
+        .build()
+
     private val retrofit = Retrofit.Builder()
-        .baseUrl("http://ip-api.com/")
-        .addConverterFactory(MoshiConverterFactory.create())
+        .baseUrl("https://ipwho.is/")
+        .addConverterFactory(MoshiConverterFactory.create(moshi))
         .build()
 
     val ipApiService: IpApiService = retrofit.create(IpApiService::class.java)
