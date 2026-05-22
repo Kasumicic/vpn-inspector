@@ -11,7 +11,7 @@ android {
     applicationId = "com.kasumic.vpndetector"
     minSdk = 24
     targetSdk = 34
-    versionCode = 3
+    versionCode = 4
     versionName = "1.3"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -57,7 +57,6 @@ android {
 
 dependencies {
   implementation(platform(libs.androidx.compose.bom))
-  implementation(platform(libs.firebase.bom))
   implementation(libs.androidx.activity.compose)
   implementation(libs.androidx.compose.material.icons.core)
   implementation(libs.androidx.compose.material3)
