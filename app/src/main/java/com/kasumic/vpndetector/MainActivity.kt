@@ -370,7 +370,12 @@ fun ResultDetailsDialog(result: ScanResult, onDismiss: () -> Unit) {
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text("Показания:", fontWeight = FontWeight.Bold, color = colors.secondaryActionText)
-                Text(result.details, color = if(result.isRisky) colors.error else colors.success, fontSize = 14.sp)
+                val detailColor = when {
+                    result.isRisky -> colors.error
+                    result.isError -> colors.warning
+                    else -> colors.success
+                }
+                Text(result.details, color = detailColor, fontSize = 14.sp)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 if (result.isRisky && result.fixSuggestion.isNotEmpty()) {
@@ -425,7 +430,7 @@ fun StatusCard(uiState: ScannerUiState) {
     val colors = LocalAppColors.current
 
     val statusText = when {
-        uiState.isScanning -> "Идет сканирование..."
+        uiState.isScanning -> uiState.currentScanStatus
         !uiState.scanCompleted -> "Система готова.\nНажмите для анализа."
         uiState.decision == DecisionState.DETECTED -> "ОБНАРУЖЕН ОБХОД"
         uiState.decision == DecisionState.NEEDS_CHECK -> "ТРЕБУЕТСЯ ПРОВЕРКА"
@@ -498,8 +503,16 @@ fun ResultsList(results: List<ScanResult>, modifier: Modifier = Modifier, onResu
 @Composable
 fun ResultItem(result: ScanResult, onClick: (ScanResult) -> Unit) {
     val colors = LocalAppColors.current
-    val iconColor = if (result.isRisky) colors.error else colors.success
-    val icon = if (result.isRisky) Icons.Default.Warning else Icons.Default.CheckCircle
+    val iconColor = when {
+        result.isRisky -> colors.error
+        result.isError -> colors.warning
+        else -> colors.success
+    }
+    val icon = when {
+        result.isRisky -> Icons.Default.Warning
+        result.isError -> Icons.Default.Warning
+        else -> Icons.Default.CheckCircle
+    }
 
     Row(
         modifier = Modifier
@@ -547,7 +560,11 @@ fun formatScanSummary(uiState: ScannerUiState): String {
     sb.append("Trust Score: ${uiState.trustScore}%\n\n")
     sb.append("Результаты проверок:\n")
     for (result in uiState.results) {
-        val icon = if (result.isRisky) "⚠️" else "✅"
+        val icon = when {
+            result.isRisky -> "🔴"
+            result.isError -> "🟡"
+            else -> "🟢"
+        }
         sb.append("$icon ${result.moduleName}: ${result.details}\n")
     }
     return sb.toString()
