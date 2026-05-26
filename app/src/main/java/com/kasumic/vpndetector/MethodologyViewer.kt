@@ -221,6 +221,17 @@ fun MethodologyViewerScreen(
                             fontSize = 14.sp,
                             textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
                         )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Исходный код (GitHub)",
+                            color = colors.primaryAction,
+                            modifier = Modifier.clickable {
+                                uriHandler.openUri("https://github.com/Kasumicic/vpn-inspector")
+                            }.padding(vertical = 4.dp),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
+                        )
                     }
                 }
             }

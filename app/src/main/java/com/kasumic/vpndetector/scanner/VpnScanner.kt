@@ -71,15 +71,83 @@ class VpnScanner(private val context: Context) {
             val caps = cm.getNetworkCapabilities(activeNetwork) ?: return ScanResult(ScanCategory.DIRECT, "Системный VPN API", false, "Нет данных", "Проверка системного флага VPN.", "")
 
             val hasVpnTransport = caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)
-            val isNotVpnCap = caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+            var hasVpnInfo = false
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val tInfo = caps.transportInfo
+                if (tInfo != null && tInfo.javaClass.name == "android.net.VpnTransportInfo") {
+                    hasVpnInfo = true
+                }
+            }
 
-            if (hasVpnTransport || !isNotVpnCap) {
-                ScanResult(ScanCategory.DIRECT, "Системный VPN API", true, "ОБНАРУЖЕН VPN (NetworkCapabilities)", "Система напрямую сообщает о наличии активного VPN-туннеля.", "Используйте Proxy-режим (в обход VpnService) или VPN-клиенты с root-правами (например, iptables) для прозрачного перенаправления без системного флага.")
+            if (hasVpnTransport || hasVpnInfo) {
+                val detailDesc = if (hasVpnInfo) "(TRANSPORT_VPN и VpnTransportInfo)" else "(NetworkCapabilities)"
+                ScanResult(ScanCategory.DIRECT, "Системный VPN API", true, "ОБНАРУЖЕН VPN $detailDesc", "Система напрямую сообщает о наличии активного VPN-туннеля.", "Используйте Proxy-режим (в обход VpnService) или VPN-клиенты с root-правами (например, iptables) для прозрачного перенаправления без системного флага.")
             } else {
                 ScanResult(ScanCategory.DIRECT, "Системный VPN API", false, "ЧИСТО", "Проверка прямого системного флага VPN.","")
             }
         } catch (e: Exception) {
             ScanResult(ScanCategory.DIRECT, "Системный VPN API", false, "Ошибка: ${e.message}", "Ошибка доступа.","")
+        }
+    }
+
+    fun checkSystemProxySettings(): ScanResult {
+        return try {
+            val host = System.getProperty("http.proxyHost") ?: System.getProperty("https.proxyHost") ?: System.getProperty("socksProxyHost")
+            val port = System.getProperty("http.proxyPort") ?: System.getProperty("https.proxyPort") ?: System.getProperty("socksProxyPort")
+            
+            if (!host.isNullOrEmpty()) {
+                ScanResult(
+                    category = ScanCategory.DIRECT,
+                    moduleName = "Системные Proxy-настройки",
+                    isRisky = true,
+                    details = "ОБНАРУЖЕН PROXY ($host:$port)",
+                    description = "Выявление использования системного Proxy на основе системных свойств System.getProperty.",
+                    fixSuggestion = "Отключите системный прокси-сервер в настройках сети Android, чтобы трафик шел напрямую."
+                )
+            } else {
+                ScanResult(
+                    category = ScanCategory.DIRECT,
+                    moduleName = "Системные Proxy-настройки",
+                    isRisky = false,
+                    details = "ЧИСТО",
+                    description = "Выявление использования системного Proxy на основе системных свойств System.getProperty.",
+                    fixSuggestion = ""
+                )
+            }
+        } catch (e: Exception) {
+            ScanResult(ScanCategory.DIRECT, "Системные Proxy-настройки", false, "Ошибка: ${e.message}", "", "")
+        }
+    }
+
+    fun checkNotVpnCapability(): ScanResult {
+        return try {
+            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val activeNetwork = cm.activeNetwork ?: return ScanResult(ScanCategory.INDIRECT, "Флаг NOT_VPN", false, "Нет активной сети", "Проверка флага NOT_VPN в Capabilities.", "")
+            val caps = cm.getNetworkCapabilities(activeNetwork) ?: return ScanResult(ScanCategory.INDIRECT, "Флаг NOT_VPN", false, "Нет данных", "Проверка флага NOT_VPN в Capabilities.", "")
+
+            val isNotVpnCap = caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+
+            if (!isNotVpnCap) {
+                ScanResult(
+                    category = ScanCategory.INDIRECT,
+                    moduleName = "Флаг NOT_VPN в Capabilities",
+                    isRisky = true,
+                    details = "ОТСУТСТВУЕТ (Флаг NOT_VPN сброшен)",
+                    description = "Косвенный признак. Для обычных сетей этот флаг присутствует, при активном VPN отсутствует.",
+                    fixSuggestion = "Используйте обходные пути на уровне сокетов, не регистрирующие VPN в системе."
+                )
+            } else {
+                ScanResult(
+                    category = ScanCategory.INDIRECT,
+                    moduleName = "Флаг NOT_VPN в Capabilities",
+                    isRisky = false,
+                    details = "ЧИСТО",
+                    description = "Косвенный признак. Для обычных сетей этот флаг присутствует, при активном VPN отсутствует.",
+                    fixSuggestion = ""
+                )
+            }
+        } catch (e: Exception) {
+            ScanResult(ScanCategory.INDIRECT, "Флаг NOT_VPN в Capabilities", false, "Ошибка: ${e.message}", "", "")
         }
     }
 
@@ -127,7 +195,15 @@ class VpnScanner(private val context: Context) {
             "com.expressvpn.vpn" to "ExpressVPN",
             "com.psiphon3.subscriptions" to "Psiphon Pro",
             "org.outline.android.client" to "Outline",
-            "io.nekohasekai.sagerenet" to "Matsuri/NekoBox"
+            "io.nekohasekai.sagerenet" to "Matsuri/NekoBox",
+            "io.github.romanvht.byedpi" to "ByeDPI",
+            "org.amnezia.vpn" to "AmneziaVPN",
+            "com.tunnelbear.android" to "TunnelBear",
+            "com.windscribe.vpn" to "Windscribe",
+            "org.torproject.torbrowser" to "Tor Browser",
+            "org.torproject.android" to "Orbot (Tor)",
+            "com.antizabor" to "АнтиЗабор",
+            "org.zaborona.vpn" to "Zaborona VPN"
         )
         val foundApps = mutableListOf<String>()
         val pm = context.packageManager
