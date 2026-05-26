@@ -189,7 +189,15 @@ fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Uni
         Spacer(modifier = Modifier.height(16.dp))
         Text("VPN Inspector", fontSize = 24.sp, color = colors.primaryText, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-        Text("Версия 1.3", textAlign = TextAlign.Center, color = colors.secondaryText)
+        Text("Версия 1.4", textAlign = TextAlign.Center, color = colors.secondaryText)
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Исходный код",
+            color = colors.primaryAction,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.clickable { uriHandler.openUri("https://github.com/Kasumicic/vpn-inspector") },
+            textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
+        )
         
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -233,12 +241,15 @@ fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Uni
 
         Column(modifier = Modifier.fillMaxWidth()) {
             MethodologyBullet("• GeoIP", "Анализ на стороне сервера. Сравнение IP с репутационными базами.", colors)
-            MethodologyBullet("• Прямые признаки", "Опрос системного API Android на наличие VPN транспорта и поиск установленных VPN-пакетов.", colors)
-            MethodologyBullet("• Сетевые задержки", "Измерение RTT (SNITCH) до локальных и зарубежных узлов.", colors)
-            MethodologyBullet("• Интерфейсы", "Поиск виртуальных адаптеров туннелирования (tun, tap, wg).", colors)
+            MethodologyBullet("• Системный VPN API", "Опрос системного API Android на наличие TRANSPORT_VPN и VpnTransportInfo.", colors)
+            MethodologyBullet("• Системные Proxy", "Выявление настроек прокси на основе системных свойств System.getProperty.", colors)
+            MethodologyBullet("• Прямые признаки (Пакеты)", "Поиск установленных известных VPN/Proxy-клиентов и инструментов обхода.", colors)
+            MethodologyBullet("• Флаг NOT_VPN", "Проверка наличия флага NET_CAPABILITY_NOT_VPN в активных сетевых подключениях.", colors)
+            MethodologyBullet("• Сетевые интерфейсы", "Поиск виртуальных адаптеров туннелирования (tun, tap, wg, ppp).", colors)
             MethodologyBullet("• Аномалии MTU", "Анализ размера кадра (MTU) на следы инкапсуляции VPN-заголовков.", colors)
-            MethodologyBullet("• Локальные Proxy", "Проверка стандартных портов, открываемых клиентскими proxy.", colors)
+            MethodologyBullet("• Локальные Proxy", "Проверка стандартных портов (Socks5/HTTP), открываемых клиентскими прокси.", colors)
             MethodologyBullet("• Подмена IP", "Проверка выдачи фейковых локальных IP-адресов доменам (Fake-IP туннелирование).", colors)
+            MethodologyBullet("• Сетевые задержки (SNITCH)", "Сравнение пинга до национальных (RU) и зарубежных (EU) узлов.", colors)
         }
 
         Spacer(modifier = Modifier.height(32.dp))
