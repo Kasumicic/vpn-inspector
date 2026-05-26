@@ -1,6 +1,0 @@
-{
-  "name": "VPN Inspector",
-  "description": "Professional VPN and proxy detector using various system and network level metrics",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
