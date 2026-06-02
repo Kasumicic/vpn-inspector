@@ -17,3 +17,4 @@ local.properties
 .env
 debug.keystore
 release.jks
+.env.example
