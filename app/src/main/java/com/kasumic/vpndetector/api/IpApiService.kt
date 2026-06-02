@@ -1,6 +1,7 @@
 package com.kasumic.vpndetector.api
 
 import retrofit2.http.GET
+import retrofit2.http.Path
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import retrofit2.Retrofit
@@ -26,6 +27,9 @@ data class IpApiResponse(
 interface IpApiService {
     @GET("json/")
     suspend fun getIpInfo(): IpApiResponse
+
+    @GET("json/{ip}")
+    suspend fun getIpInfoFor(@Path("ip") ip: String): IpApiResponse
 }
 
 class IPv6FirstDns : Dns {

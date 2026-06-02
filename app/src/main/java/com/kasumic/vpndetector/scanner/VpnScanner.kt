@@ -24,6 +24,7 @@ data class ScanResult(
 )
 
 class VpnScanner(private val context: Context) {
+    private var lastIpv4CountryCode: String? = null
 
     suspend fun getIpInfo(): Pair<String, List<ScanResult>> = withContext(Dispatchers.IO) {
         val results = mutableListOf<ScanResult>()
@@ -33,6 +34,7 @@ class VpnScanner(private val context: Context) {
             if (response.ip != null) {
                 ip = response.ip
                 val countryCode = response.country?.iso ?: "Неизвестно"
+                lastIpv4CountryCode = countryCode
                 val notRussia = countryCode != "RU"
 
                 val isRisky = notRussia
@@ -336,5 +338,155 @@ class VpnScanner(private val context: Context) {
         }
 
         ScanResult(ScanCategory.INDIRECT, "Сетевые задержки (SNITCH)", false, "В пределах нормы (RU:${pingRu}ms / EU:${pingEu}ms)", "Сравнение пинга (TCP RTT) для национальных и зарубежных узлов.", "")
+    }
+
+    private fun fetchBackupGeoCountry(ip: String): String? {
+        try {
+            val request = okhttp3.Request.Builder()
+                .url("https://ipapi.co/$ip/json/")
+                .build()
+            NetworkClient.okHttpClient.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    val body = response.body?.string()
+                    if (!body.isNullOrEmpty()) {
+                        val match = java.util.regex.Pattern.compile("\"country_code\"\\s*:\\s*\"([^\"]+)\"").matcher(body)
+                        if (match.find()) {
+                            return match.group(1)
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // ignore
+        }
+
+        try {
+            val request = okhttp3.Request.Builder()
+                .url("https://ipwho.is/$ip")
+                .build()
+            NetworkClient.okHttpClient.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    val body = response.body?.string()
+                    if (!body.isNullOrEmpty()) {
+                        val match = java.util.regex.Pattern.compile("\"country_code\"\\s*:\\s*\"([^\"]+)\"").matcher(body)
+                        if (match.find()) {
+                            return match.group(1)
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // ignore
+        }
+
+        try {
+            val request = okhttp3.Request.Builder()
+                .url("https://freeipapi.com/api/json/$ip")
+                .build()
+            NetworkClient.okHttpClient.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    val body = response.body?.string()
+                    if (!body.isNullOrEmpty()) {
+                        val match = java.util.regex.Pattern.compile("\"countryCode\"\\s*:\\s*\"([^\"]+)\"").matcher(body)
+                        if (match.find()) {
+                            return match.group(1)
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // ignore
+        }
+        return null
+    }
+
+    suspend fun checkIpv6Leak(): ScanResult = withContext(Dispatchers.IO) {
+        try {
+            val request = okhttp3.Request.Builder()
+                .url("https://api6.ipify.org")
+                .build()
+            val response = NetworkClient.okHttpClient.newCall(request).execute()
+            if (response.isSuccessful) {
+                val ipv6 = response.body?.string()?.trim()
+                if (!ipv6.isNullOrEmpty()) {
+                    var ipv6Country: String? = null
+                    try {
+                        val geoResponse = NetworkClient.ipApiService.getIpInfoFor(ipv6)
+                        ipv6Country = geoResponse.country?.iso
+                    } catch (e: Exception) {
+                        // ignore and try fallback
+                    }
+
+                    if (ipv6Country.isNullOrEmpty() || ipv6Country == "null") {
+                        ipv6Country = fetchBackupGeoCountry(ipv6)
+                    }
+
+                    val finalIpv6Country = ipv6Country ?: "Неизвестно"
+                    val ipv4Country = lastIpv4CountryCode ?: "RU"
+
+                    val isLeak = if (ipv4Country != "Неизвестно" && finalIpv6Country != "Неизвестно") {
+                        ipv4Country != finalIpv6Country
+                    } else if (ipv4Country != "RU") {
+                        false
+                    } else {
+                        false
+                    }
+
+                    if (isLeak) {
+                        ScanResult(
+                            category = ScanCategory.INDIRECT,
+                            moduleName = "Утечка IPv6 (IPv6 Leak)",
+                            isRisky = true,
+                            details = "УТЕЧКА! IPv4 зашифрован ($ipv4Country), но IPv6 идет напрямую ($ipv6, Страна: $finalIpv6Country)",
+                            description = "Определение утечки реального IPv6-адреса. Распространенная уязвимость VPN, когда IPv6 трафик идет мимо туннеля.",
+                            fixSuggestion = "Отключите IPv6 в настройках мобильной сети вашего устройства или в настройках роутера. Некоторые VPN клиенты также позволяют принудительно блокировать нетуннелируемый IPv6 трафик."
+                        )
+                    } else {
+                        val detailsText = if (finalIpv6Country != "Неизвестно" && ipv4Country != "Неизвестно") {
+                            "БЕЗОПАСНО (IPv6: $ipv6, Страна: $finalIpv6Country совпадает с IPv4: $ipv4Country)"
+                        } else if (finalIpv6Country != "Неизвестно") {
+                            "ЧИСТО (IPv6 активен: $ipv6, Страна: $finalIpv6Country)"
+                        } else {
+                            "ЧИСТО (IPv6: $ipv6, но страна не определена - утечка маловероятна)"
+                        }
+                        ScanResult(
+                            category = ScanCategory.INDIRECT,
+                            moduleName = "Утечка IPv6 (IPv6 Leak)",
+                            isRisky = false,
+                            details = detailsText,
+                            description = "Анализ утечки реального IPv6-адреса через незащищенные маршруты.",
+                            fixSuggestion = ""
+                        )
+                    }
+                } else {
+                    ScanResult(
+                        category = ScanCategory.INDIRECT,
+                        moduleName = "Утечка IPv6 (IPv6 Leak)",
+                        isRisky = false,
+                        details = "ЧИСТО (IPv6 соединение не вернуло адрес)",
+                        description = "Анализ утечки реального IPv6-адреса через незащищенные маршруты.",
+                        fixSuggestion = ""
+                    )
+                }
+            } else {
+                ScanResult(
+                    category = ScanCategory.INDIRECT,
+                    moduleName = "Утечка IPv6 (IPv6 Leak)",
+                    isRisky = false,
+                    details = "ЧИСТО (IPv6-only хост недоступен)",
+                    description = "Анализ утечки реального IPv6-адреса через незащищенные маршруты.",
+                    fixSuggestion = ""
+                )
+            }
+        } catch (e: Exception) {
+            ScanResult(
+                category = ScanCategory.INDIRECT,
+                moduleName = "Утечка IPv6 (IPv6 Leak)",
+                isRisky = false,
+                details = "ЧИСТО (IPv6 не поддерживается или заблокирован туннелем)",
+                description = "Анализ утечки реального IPv6-адреса через незащищенные маршруты.",
+                fixSuggestion = ""
+            )
+        }
     }
 }

@@ -48,50 +48,54 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             results = emptyList(),
             decision = DecisionState.CLEAN,
             trustScore = 100,
-            currentScanStatus = "Настройка сканирования (0/10)"
+            currentScanStatus = "Настройка сканирования (0/11)"
         )
 
         viewModelScope.launch {
             val scanResults = mutableListOf<ScanResult>()
             
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Анализ IP и GeoIP (1/10)...")
+            _uiState.value = _uiState.value.copy(currentScanStatus = "Анализ IP и GeoIP (1/11)...")
             val (ip, ipResults) = scanner.getIpInfo()
             scanResults.addAll(ipResults)
             _uiState.value = _uiState.value.copy(ipAddress = ip, results = scanResults.toList())
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка системного VPN (2/10)...")
+            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка утечки IPv6 (2/11)...")
+            scanResults.add(scanner.checkIpv6Leak())
+            _uiState.value = _uiState.value.copy(results = scanResults.toList())
+
+            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка системного VPN (3/11)...")
             scanResults.add(scanner.checkDirectApi())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка системных Proxy (3/10)...")
+            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка системных Proxy (4/11)...")
             scanResults.add(scanner.checkSystemProxySettings())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка пакетов (4/10)...")
+            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка пакетов (5/11)...")
             scanResults.add(scanner.checkVpnApps())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка флага NOT_VPN (5/10)...")
+            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка флага NOT_VPN (6/11)...")
             scanResults.add(scanner.checkNotVpnCapability())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка интерфейсов (6/10)...")
+            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка интерфейсов (7/11)...")
             scanResults.add(scanner.checkInterfaces())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка MTU (7/10)...")
+            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка MTU (8/11)...")
             scanResults.add(scanner.checkMtuAnomalies())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка локального прокси (8/10)...")
+            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка локального прокси (9/11)...")
             scanResults.add(scanner.checkLocalProxies())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка Fake-IP (9/10)...")
+            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка Fake-IP (10/11)...")
             scanResults.add(scanner.checkFakeIp())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Анализ сетевой задержки (10/10)...")
+            _uiState.value = _uiState.value.copy(currentScanStatus = "Анализ сетевой задержки (11/11)...")
             scanResults.add(scanner.analyzeLatency())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
             
