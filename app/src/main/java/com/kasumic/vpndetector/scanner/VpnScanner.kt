@@ -5,6 +5,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import com.kasumic.vpndetector.api.NetworkClient
+import com.kasumic.vpndetector.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.NetworkInterface
@@ -28,28 +29,46 @@ class VpnScanner(private val context: Context) {
 
     suspend fun getIpInfo(): Pair<String, List<ScanResult>> = withContext(Dispatchers.IO) {
         val results = mutableListOf<ScanResult>()
-        var ip = "Unknown"
+        var ip = context.getString(R.string.unknown_val)
         try {
             val response = NetworkClient.ipApiService.getIpInfo()
             if (response.ip != null) {
                 ip = response.ip
-                val countryCode = response.country?.iso ?: "Неизвестно"
+                val countryCode = response.country?.iso ?: context.getString(R.string.unknown_val)
                 lastIpv4CountryCode = countryCode
-                val notRussia = countryCode != "RU"
+                val sharedPrefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                val targetRegion = sharedPrefs.getString("target_region", "RU") ?: "RU"
+                val notTarget = !countryCode.equals(targetRegion, ignoreCase = true)
 
-                val isRisky = notRussia
+                val isRisky = notTarget
                 results.add(
                     ScanResult(
                         category = ScanCategory.GEO,
-                        moduleName = "Анализ IP (GeoIP)",
+                        moduleName = context.getString(R.string.geo_analysis_title),
                         isRisky = isRisky,
-                        details = if (isRisky) "Подозрительный IP:\nСтрана: $countryCode" else "Чистый IP (Ожидаемый регион: $countryCode)",
-                        description = "Метод определяет регион IP на стороне сервера (GeoIP).",
-                        fixSuggestion = if (isRisky) "Используйте резидентные прокси или настройте маршрутизацию (Split Tunneling) на российские IP адреса." else "Обход надежно скрыт на уровне GeoIP."
+                        details = if (isRisky) {
+                            context.getString(R.string.geo_detail_suspicious, countryCode)
+                        } else {
+                            context.getString(R.string.geo_detail_clean, countryCode)
+                        },
+                        description = context.getString(R.string.geo_desc),
+                        fixSuggestion = if (isRisky) {
+                            context.getString(R.string.geo_fix_suspicious)
+                        } else {
+                            context.getString(R.string.geo_fix_clean)
+                        }
                     )
                 )
             } else {
-                results.add(ScanResult(ScanCategory.GEO, "Анализ IP (GeoIP)", false, "Ошибка сети", "Не удалось получить серверный ответ с GeoIP.", "", isError = true))
+                results.add(ScanResult(
+                    category = ScanCategory.GEO,
+                    moduleName = context.getString(R.string.geo_analysis_title),
+                    isRisky = false,
+                    details = context.getString(R.string.geo_error_network),
+                    description = context.getString(R.string.geo_error_server),
+                    fixSuggestion = "",
+                    isError = true
+                ))
             }
         } catch (e: Exception) {
             try {
@@ -61,7 +80,15 @@ class VpnScanner(private val context: Context) {
             } catch (fallbackE: Exception) {
                 // Ignore fallback exception
             }
-            results.add(ScanResult(ScanCategory.GEO, "Анализ IP (GeoIP)", false, "Ошибка: ${e.message}", "Не удалось подключиться к API.", "", isError = true))
+            results.add(ScanResult(
+                category = ScanCategory.GEO,
+                moduleName = context.getString(R.string.geo_analysis_title),
+                isRisky = false,
+                details = context.getString(R.string.geo_error_prefix, e.message ?: ""),
+                description = context.getString(R.string.geo_error_connect),
+                fixSuggestion = "",
+                isError = true
+            ))
         }
         return@withContext ip to results
     }
@@ -69,8 +96,8 @@ class VpnScanner(private val context: Context) {
     fun checkDirectApi(): ScanResult {
         return try {
             val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            val activeNetwork = cm.activeNetwork ?: return ScanResult(ScanCategory.DIRECT, "Системный VPN API", false, "Нет активной сети", "Проверка системного флага VPN.", "")
-            val caps = cm.getNetworkCapabilities(activeNetwork) ?: return ScanResult(ScanCategory.DIRECT, "Системный VPN API", false, "Нет данных", "Проверка системного флага VPN.", "")
+            val activeNetwork = cm.activeNetwork ?: return ScanResult(ScanCategory.DIRECT, context.getString(R.string.direct_vpn_api_title), false, context.getString(R.string.direct_vpn_no_network), context.getString(R.string.direct_vpn_desc), "")
+            val caps = cm.getNetworkCapabilities(activeNetwork) ?: return ScanResult(ScanCategory.DIRECT, context.getString(R.string.direct_vpn_api_title), false, context.getString(R.string.direct_vpn_no_data), context.getString(R.string.direct_vpn_desc), "")
 
             val hasVpnTransport = caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)
             var hasVpnInfo = false
@@ -82,13 +109,13 @@ class VpnScanner(private val context: Context) {
             }
 
             if (hasVpnTransport || hasVpnInfo) {
-                val detailDesc = if (hasVpnInfo) "(TRANSPORT_VPN и VpnTransportInfo)" else "(NetworkCapabilities)"
-                ScanResult(ScanCategory.DIRECT, "Системный VPN API", true, "ОБНАРУЖЕН VPN $detailDesc", "Система напрямую сообщает о наличии активного VPN-туннеля.", "Используйте Proxy-режим (в обход VpnService) или VPN-клиенты с root-правами (например, iptables) для прозрачного перенаправления без системного флага.")
+                val detailDesc = if (hasVpnInfo) "(TRANSPORT_VPN & VpnTransportInfo)" else "(NetworkCapabilities)"
+                ScanResult(ScanCategory.DIRECT, context.getString(R.string.direct_vpn_api_title), true, context.getString(R.string.direct_vpn_found, detailDesc), context.getString(R.string.direct_vpn_found_desc), context.getString(R.string.direct_vpn_fix))
             } else {
-                ScanResult(ScanCategory.DIRECT, "Системный VPN API", false, "ЧИСТО", "Проверка прямого системного флага VPN.","")
+                ScanResult(ScanCategory.DIRECT, context.getString(R.string.direct_vpn_api_title), false, context.getString(R.string.direct_vpn_clean), context.getString(R.string.direct_vpn_desc),"")
             }
         } catch (e: Exception) {
-            ScanResult(ScanCategory.DIRECT, "Системный VPN API", false, "Ошибка: ${e.message}", "Ошибка доступа.","")
+            ScanResult(ScanCategory.DIRECT, context.getString(R.string.direct_vpn_api_title), false, context.getString(R.string.direct_vpn_error, e.message ?: ""), "","")
         }
     }
 
@@ -100,56 +127,56 @@ class VpnScanner(private val context: Context) {
             if (!host.isNullOrEmpty()) {
                 ScanResult(
                     category = ScanCategory.DIRECT,
-                    moduleName = "Системные Proxy-настройки",
+                    moduleName = context.getString(R.string.proxy_settings_title),
                     isRisky = true,
-                    details = "ОБНАРУЖЕН PROXY ($host:$port)",
-                    description = "Выявление использования системного Proxy на основе системных свойств System.getProperty.",
-                    fixSuggestion = "Отключите системный прокси-сервер в настройках сети Android, чтобы трафик шел напрямую."
+                    details = context.getString(R.string.proxy_settings_found, host, port),
+                    description = context.getString(R.string.proxy_settings_desc),
+                    fixSuggestion = context.getString(R.string.proxy_settings_fix)
                 )
             } else {
                 ScanResult(
                     category = ScanCategory.DIRECT,
-                    moduleName = "Системные Proxy-настройки",
+                    moduleName = context.getString(R.string.proxy_settings_title),
                     isRisky = false,
-                    details = "ЧИСТО",
-                    description = "Выявление использования системного Proxy на основе системных свойств System.getProperty.",
+                    details = context.getString(R.string.proxy_settings_clean),
+                    description = context.getString(R.string.proxy_settings_desc),
                     fixSuggestion = ""
                 )
             }
         } catch (e: Exception) {
-            ScanResult(ScanCategory.DIRECT, "Системные Proxy-настройки", false, "Ошибка: ${e.message}", "", "")
+            ScanResult(ScanCategory.DIRECT, context.getString(R.string.proxy_settings_title), false, context.getString(R.string.direct_vpn_error, e.message ?: ""), "", "")
         }
     }
 
     fun checkNotVpnCapability(): ScanResult {
         return try {
             val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            val activeNetwork = cm.activeNetwork ?: return ScanResult(ScanCategory.INDIRECT, "Флаг NOT_VPN", false, "Нет активной сети", "Проверка флага NOT_VPN в Capabilities.", "")
-            val caps = cm.getNetworkCapabilities(activeNetwork) ?: return ScanResult(ScanCategory.INDIRECT, "Флаг NOT_VPN", false, "Нет данных", "Проверка флага NOT_VPN в Capabilities.", "")
+            val activeNetwork = cm.activeNetwork ?: return ScanResult(ScanCategory.INDIRECT, context.getString(R.string.not_vpn_title), false, context.getString(R.string.not_vpn_no_network), context.getString(R.string.not_vpn_desc), "")
+            val caps = cm.getNetworkCapabilities(activeNetwork) ?: return ScanResult(ScanCategory.INDIRECT, context.getString(R.string.not_vpn_title), false, context.getString(R.string.not_vpn_no_data), context.getString(R.string.not_vpn_desc), "")
 
             val isNotVpnCap = caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
 
             if (!isNotVpnCap) {
                 ScanResult(
                     category = ScanCategory.INDIRECT,
-                    moduleName = "Флаг NOT_VPN в Capabilities",
+                    moduleName = context.getString(R.string.not_vpn_title),
                     isRisky = true,
-                    details = "ОТСУТСТВУЕТ (Флаг NOT_VPN сброшен)",
-                    description = "Косвенный признак. Для обычных сетей этот флаг присутствует, при активном VPN отсутствует.",
-                    fixSuggestion = "Используйте обходные пути на уровне сокетов, не регистрирующие VPN в системе."
+                    details = context.getString(R.string.not_vpn_missing),
+                    description = context.getString(R.string.not_vpn_desc),
+                    fixSuggestion = context.getString(R.string.not_vpn_fix)
                 )
             } else {
                 ScanResult(
                     category = ScanCategory.INDIRECT,
-                    moduleName = "Флаг NOT_VPN в Capabilities",
+                    moduleName = context.getString(R.string.not_vpn_title),
                     isRisky = false,
-                    details = "ЧИСТО",
-                    description = "Косвенный признак. Для обычных сетей этот флаг присутствует, при активном VPN отсутствует.",
+                    details = context.getString(R.string.not_vpn_clean),
+                    description = context.getString(R.string.not_vpn_desc),
                     fixSuggestion = ""
                 )
             }
         } catch (e: Exception) {
-            ScanResult(ScanCategory.INDIRECT, "Флаг NOT_VPN в Capabilities", false, "Ошибка: ${e.message}", "", "")
+            ScanResult(ScanCategory.INDIRECT, context.getString(R.string.not_vpn_title), false, context.getString(R.string.direct_vpn_error, e.message ?: ""), "", "")
         }
     }
 
@@ -164,12 +191,12 @@ class VpnScanner(private val context: Context) {
                 }
             }
             if (badIfaces.isNotEmpty()) {
-                ScanResult(ScanCategory.INDIRECT, "Сетевые интерфейсы", true, "НАЙДЕНЫ (${badIfaces.joinToString(", ")})", "Косвенный признак. Наличие виртуальных интерфейсов (tun/tap/wg) может указывать на туннель.", "Отмените создание tun-интерфейса в настройках клиента (используйте чистый socks/http proxy), либо переименуйте интерфейс через root-доступ.")
+                ScanResult(ScanCategory.INDIRECT, context.getString(R.string.interfaces_title), true, context.getString(R.string.interfaces_found, badIfaces.joinToString(", ")), context.getString(R.string.interfaces_desc), context.getString(R.string.interfaces_fix))
             } else {
-                ScanResult(ScanCategory.INDIRECT, "Сетевые интерфейсы", false, "ЧИСТО", "Косвенная проверка на наличие виртуальных адаптеров туннелирования.", "")
+                ScanResult(ScanCategory.INDIRECT, context.getString(R.string.interfaces_title), false, context.getString(R.string.interfaces_clean), context.getString(R.string.interfaces_desc_clean), "")
             }
         } catch (e: Exception) {
-            ScanResult(ScanCategory.INDIRECT, "Сетевые интерфейсы", false, "Ошибка: ${e.message}", "Ошибка чтения интерфейсов.", "")
+            ScanResult(ScanCategory.INDIRECT, context.getString(R.string.interfaces_title), false, context.getString(R.string.direct_vpn_error, e.message ?: ""), context.getString(R.string.interfaces_error), "")
         }
     }
 
@@ -223,9 +250,9 @@ class VpnScanner(private val context: Context) {
             }
         }
         return if (foundApps.isNotEmpty()) {
-            ScanResult(ScanCategory.DIRECT, "Пакеты приложений", true, "НАЙДЕНЫ (${foundApps.joinToString(", ")})", "Прямой признак. Обнаружены установленные популярные VPN-клиенты.", "Используйте кастомные сборки/форки клиентов или скрывайте приложения через модули Magisk / App Hider.")
+            ScanResult(ScanCategory.DIRECT, context.getString(R.string.app_packages_title), true, context.getString(R.string.app_packages_found, foundApps.joinToString(", ")), context.getString(R.string.app_packages_desc), context.getString(R.string.app_packages_fix))
         } else {
-            ScanResult(ScanCategory.DIRECT, "Пакеты приложений", false, "ЧИСТО", "Проверка на наличие популярных установленных VPN-клиентов.", "")
+            ScanResult(ScanCategory.DIRECT, context.getString(R.string.app_packages_title), false, context.getString(R.string.app_packages_clean), context.getString(R.string.app_packages_desc_clean), "")
         }
     }
 
@@ -240,21 +267,21 @@ class VpnScanner(private val context: Context) {
                     val name = iface.name.lowercase()
 
                     if (name.contains("wlan") || name.contains("eth")) {
-                        if (mtu in 1..1449) anomalies.add("$name (размер $mtu)")
+                        if (mtu in 1..1449) anomalies.add("$name (size $mtu)")
                     } else if (name.contains("rmnet")) {
-                        if (mtu in 1..1349) anomalies.add("$name (размер $mtu)")
+                        if (mtu in 1..1349) anomalies.add("$name (size $mtu)")
                     } else if (mtu in 1..1399) {
-                        anomalies.add("$name (размер $mtu)")
+                        anomalies.add("$name (size $mtu)")
                     }
                 }
             }
             if (anomalies.isNotEmpty()) {
-                ScanResult(ScanCategory.INDIRECT, "Аномалии MTU", true, "ПОНИЖЕН: ${anomalies.joinToString(", ")}", "Косвенный признак. Пониженный MTU характерен для туннелированного трафика из-за инкапсуляции заголовков.", "Отрегулируйте MTU виртуального интерфейса до стандартных значений (1420-1500) в расширенных настройках VPN-клиента.")
+                ScanResult(ScanCategory.INDIRECT, context.getString(R.string.mtu_anomalies_title), true, context.getString(R.string.mtu_low, anomalies.joinToString(", ")), context.getString(R.string.mtu_desc), context.getString(R.string.mtu_fix))
             } else {
-                ScanResult(ScanCategory.INDIRECT, "Аномалии MTU", false, "ЧИСТО", "Анализ размера кадра (MTU) на косвенные следы инкапсуляции VPN.", "")
+                ScanResult(ScanCategory.INDIRECT, context.getString(R.string.mtu_anomalies_title), false, context.getString(R.string.mtu_clean), context.getString(R.string.mtu_desc_clean), "")
             }
         } catch (e: Exception) {
-            ScanResult(ScanCategory.INDIRECT, "Аномалии MTU", false, "Ошибка: ${e.message}", "", "")
+            ScanResult(ScanCategory.INDIRECT, context.getString(R.string.mtu_anomalies_title), false, context.getString(R.string.mtu_error, e.message ?: ""), "", "")
         }
     }
 
@@ -273,9 +300,9 @@ class VpnScanner(private val context: Context) {
             }
         }
         if (foundPorts.isNotEmpty()) {
-            ScanResult(ScanCategory.INDIRECT, "Локальные Прокси", true, "ОТКРЫТЫ ПОРТЫ (${foundPorts.joinToString(", ")})", "Косвенный вызов. Открытые порты могут указывать на работу локального Proxy/Xray/Socks5 сервера.", "Смените стандартные порты входящего подключения (1080, 10808) на случайные динамические порты (например, 49211) в конфигурации клиента.")
+            ScanResult(ScanCategory.INDIRECT, context.getString(R.string.local_proxy_title), true, context.getString(R.string.local_proxy_open, foundPorts.joinToString(", ")), context.getString(R.string.local_proxy_desc), context.getString(R.string.local_proxy_fix))
         } else {
-            ScanResult(ScanCategory.INDIRECT, "Локальные Прокси", false, "ЧИСТО", "Анализ открытых локальных портов, характерных для proxy-клиентов.", "")
+            ScanResult(ScanCategory.INDIRECT, context.getString(R.string.local_proxy_title), false, context.getString(R.string.local_proxy_clean), context.getString(R.string.local_proxy_desc_clean), "")
         }
     }
 
@@ -298,9 +325,9 @@ class VpnScanner(private val context: Context) {
             }
         }
         if (foundFakeIps.isNotEmpty()) {
-            ScanResult(ScanCategory.INDIRECT, "Подмена Fake-IP", true, "ОБНАРУЖЕНО (${foundFakeIps.joinToString(", ")})", "Косвенный признак. VPN-ядро (например, Xray/sing-box) подменяет IP для перехвата трафика.", "Отключите функцию Fake-IP в конфигурации DNS (переключитесь на Real-IP, redir-host или remote DNS).")
+            ScanResult(ScanCategory.INDIRECT, context.getString(R.string.fake_ip_title), true, context.getString(R.string.fake_ip_detected, foundFakeIps.joinToString(", ")), context.getString(R.string.fake_ip_desc), context.getString(R.string.fake_ip_fix))
         } else {
-            ScanResult(ScanCategory.INDIRECT, "Подмена Fake-IP", false, "ЧИСТО", "Проверка на выдачу фейковых внутренних IP-адресов популярным серверам (Fake-IP туннелирование).", "")
+            ScanResult(ScanCategory.INDIRECT, context.getString(R.string.fake_ip_title), false, context.getString(R.string.fake_ip_clean), context.getString(R.string.fake_ip_desc_clean), "")
         }
     }
 
@@ -324,20 +351,24 @@ class VpnScanner(private val context: Context) {
         val pingEu = getTcpPing("google.com")
 
         if (pingRu >= 999 && pingEu >= 999) {
-            return@withContext ScanResult(ScanCategory.INDIRECT, "Сетевые задержки (SNITCH)", false, "Таймаут (сеть недоступна)", "Анализ RTT до контрольных точек.", "Сеть недоступна, либо порты заблокированы.")
+            return@withContext ScanResult(ScanCategory.INDIRECT, context.getString(R.string.snitch_title), false, context.getString(R.string.snitch_timeout), context.getString(R.string.snitch_desc_rtt), context.getString(R.string.snitch_timeout_fix))
         }
 
         // Если пинг подозрительно мал (0-2мс), значит это перехват прокси (localhost)
         if (pingRu <= 2 || pingEu <= 2) {
-            return@withContext ScanResult(ScanCategory.INDIRECT, "Сетевые задержки (SNITCH)", true, "ПЕРЕХВАТ ПРОКСИ (RU:${pingRu}ms / EU:${pingEu}ms)", "Слишком низкий пинг (<= 2мс) невозможен в реальной сети и указывает на перехват TCP локальным прокси-сервером.", "Исключите трафик проверочных серверов из TUN/Proxy перехвата (используйте прямую маршрутизацию).")
+            return@withContext ScanResult(ScanCategory.INDIRECT, context.getString(R.string.snitch_title), true, context.getString(R.string.snitch_intercept, pingRu.toString(), pingEu.toString()), context.getString(R.string.snitch_intercept_desc), context.getString(R.string.snitch_intercept_fix))
         }
 
         val ratio = pingRu.toFloat() / if (pingEu > 0) pingEu else 1
-        if (ratio > 3f && pingRu > 100) {
-            return@withContext ScanResult(ScanCategory.INDIRECT, "Сетевые задержки (SNITCH)", true, "АНОМАЛИЯ (RU:${pingRu}ms / EU:${pingEu}ms)", "Аномально высокая задержка до локального (RU) узла по сравнению с зарубежным (EU) узлом свидетельствует об использовании VPN.", "Отключите VPN или добавьте локальные хосты (ya.ru) в исключения.")
+        val sharedPrefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val targetRegion = sharedPrefs.getString("target_region", "RU") ?: "RU"
+        val isRuRegion = targetRegion.equals("RU", ignoreCase = true)
+
+        if (isRuRegion && ratio > 3f && pingRu > 100) {
+            return@withContext ScanResult(ScanCategory.INDIRECT, context.getString(R.string.snitch_title), true, context.getString(R.string.snitch_anomaly, pingRu.toString(), pingEu.toString()), context.getString(R.string.snitch_anomaly_desc), context.getString(R.string.snitch_anomaly_fix))
         }
 
-        ScanResult(ScanCategory.INDIRECT, "Сетевые задержки (SNITCH)", false, "В пределах нормы (RU:${pingRu}ms / EU:${pingEu}ms)", "Сравнение пинга (TCP RTT) для национальных и зарубежных узлов.", "")
+        ScanResult(ScanCategory.INDIRECT, context.getString(R.string.snitch_title), false, context.getString(R.string.snitch_clean, pingRu.toString(), pingEu.toString()), context.getString(R.string.snitch_desc_rtt_clean), "")
     }
 
     private fun fetchBackupGeoCountry(ip: String): String? {
@@ -421,13 +452,16 @@ class VpnScanner(private val context: Context) {
                         ipv6Country = fetchBackupGeoCountry(ipv6)
                     }
 
-                    val finalIpv6Country = ipv6Country ?: "Неизвестно"
-                    val ipv4Country = lastIpv4CountryCode ?: "RU"
+                    val finalIpv6Country = ipv6Country ?: context.getString(R.string.unknown_val)
+                    val rsharedPrefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                    val rtargetRegion = rsharedPrefs.getString("target_region", "RU") ?: "RU"
+                    val ipv4Country = lastIpv4CountryCode ?: rtargetRegion
 
-                    val isLeak = if (ipv4Country != "Неизвестно" && finalIpv6Country != "Неизвестно") {
+                    val isUnknownIpv4 = ipv4Country == "Неизвестно" || ipv4Country == "Unknown" || ipv4Country == context.getString(R.string.unknown_val)
+                    val isUnknownIpv6 = finalIpv6Country == "Неизвестно" || finalIpv6Country == "Unknown" || finalIpv6Country == context.getString(R.string.unknown_val)
+
+                    val isLeak = if (!isUnknownIpv4 && !isUnknownIpv6) {
                         ipv4Country != finalIpv6Country
-                    } else if (ipv4Country != "RU") {
-                        false
                     } else {
                         false
                     }
@@ -435,56 +469,56 @@ class VpnScanner(private val context: Context) {
                     if (isLeak) {
                         ScanResult(
                             category = ScanCategory.INDIRECT,
-                            moduleName = "Утечка IPv6 (IPv6 Leak)",
+                            moduleName = context.getString(R.string.ipv6_leak_title),
                             isRisky = true,
-                            details = "УТЕЧКА! IPv4 зашифрован ($ipv4Country), но IPv6 идет напрямую ($ipv6, Страна: $finalIpv6Country)",
-                            description = "Определение утечки реального IPv6-адреса. Распространенная уязвимость VPN, когда IPv6 трафик идет мимо туннеля.",
-                            fixSuggestion = "Отключите IPv6 в настройках мобильной сети вашего устройства или в настройках роутера. Некоторые VPN клиенты также позволяют принудительно блокировать нетуннелируемый IPv6 трафик."
+                            details = context.getString(R.string.ipv6_leak_detected, ipv4Country, ipv6, finalIpv6Country),
+                            description = context.getString(R.string.ipv6_leak_desc),
+                            fixSuggestion = context.getString(R.string.ipv6_leak_fix)
                         )
                     } else {
-                        val detailsText = if (finalIpv6Country != "Неизвестно" && ipv4Country != "Неизвестно") {
-                            "БЕЗОПАСНО (IPv6: $ipv6, Страна: $finalIpv6Country совпадает с IPv4: $ipv4Country)"
-                        } else if (finalIpv6Country != "Неизвестно") {
-                            "ЧИСТО (IPv6 активен: $ipv6, Страна: $finalIpv6Country)"
+                        val detailsText = if (!isUnknownIpv6 && !isUnknownIpv4) {
+                            context.getString(R.string.ipv6_leak_safe, ipv6, finalIpv6Country, ipv4Country)
+                        } else if (!isUnknownIpv6) {
+                            context.getString(R.string.ipv6_leak_clean_active, ipv6, finalIpv6Country)
                         } else {
-                            "ЧИСТО (IPv6: $ipv6, но страна не определена - утечка маловероятна)"
+                            context.getString(R.string.ipv6_leak_clean_unknown, ipv6)
                         }
                         ScanResult(
                             category = ScanCategory.INDIRECT,
-                            moduleName = "Утечка IPv6 (IPv6 Leak)",
+                            moduleName = context.getString(R.string.ipv6_leak_title),
                             isRisky = false,
                             details = detailsText,
-                            description = "Анализ утечки реального IPv6-адреса через незащищенные маршруты.",
+                            description = context.getString(R.string.ipv6_leak_desc_clean),
                             fixSuggestion = ""
                         )
                     }
                 } else {
                     ScanResult(
                         category = ScanCategory.INDIRECT,
-                        moduleName = "Утечка IPv6 (IPv6 Leak)",
+                        moduleName = context.getString(R.string.ipv6_leak_title),
                         isRisky = false,
-                        details = "ЧИСТО (IPv6 соединение не вернуло адрес)",
-                        description = "Анализ утечки реального IPv6-адреса через незащищенные маршруты.",
+                        details = context.getString(R.string.ipv6_leak_clean_no_addr),
+                        description = context.getString(R.string.ipv6_leak_desc_clean),
                         fixSuggestion = ""
                     )
                 }
             } else {
                 ScanResult(
                     category = ScanCategory.INDIRECT,
-                    moduleName = "Утечка IPv6 (IPv6 Leak)",
+                    moduleName = context.getString(R.string.ipv6_leak_title),
                     isRisky = false,
-                    details = "ЧИСТО (IPv6-only хост недоступен)",
-                    description = "Анализ утечки реального IPv6-адреса через незащищенные маршруты.",
+                    details = context.getString(R.string.ipv6_leak_clean_host_unreachable),
+                    description = context.getString(R.string.ipv6_leak_desc_clean),
                     fixSuggestion = ""
                 )
             }
         } catch (e: Exception) {
             ScanResult(
                 category = ScanCategory.INDIRECT,
-                moduleName = "Утечка IPv6 (IPv6 Leak)",
+                moduleName = context.getString(R.string.ipv6_leak_title),
                 isRisky = false,
-                details = "ЧИСТО (IPv6 не поддерживается или заблокирован туннелем)",
-                description = "Анализ утечки реального IPv6-адреса через незащищенные маршруты.",
+                details = context.getString(R.string.ipv6_leak_clean_not_supported),
+                description = context.getString(R.string.ipv6_leak_desc_clean),
                 fixSuggestion = ""
             )
         }

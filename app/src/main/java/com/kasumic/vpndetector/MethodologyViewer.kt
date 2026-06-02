@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
@@ -29,11 +30,12 @@ data class MethodologySection(
     val content: String
 )
 
-fun parseMethodologyMarkdown(text: String): List<MethodologySection> {
+fun parseMethodologyMarkdown(text: String, isEnglish: Boolean = false): List<MethodologySection> {
     val sections = mutableListOf<MethodologySection>()
     val lines = text.split("\n")
     
-    var currentTitle = "Введение"
+    val introTitle = if (isEnglish) "Introduction" else "Введение"
+    var currentTitle = introTitle
     val currentContent = java.lang.StringBuilder()
     
     for (line in lines) {
@@ -53,7 +55,7 @@ fun parseMethodologyMarkdown(text: String): List<MethodologySection> {
     }
     
     // Remove the first empty section if it exists
-    return sections.filter { it.content.isNotEmpty() || it.title != "Введение" }
+    return sections.filter { it.content.isNotEmpty() || it.title != introTitle }
 }
 
 sealed class MarkdownElement {
@@ -169,15 +171,23 @@ fun MethodologyViewerScreen(
     onDismiss: () -> Unit,
     colors: AppColors
 ) {
-    val sections = remember { parseMethodologyMarkdown(MethodologyData.text) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val sharedPrefs = remember(context) { context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE) }
+    val currentLang = remember(sharedPrefs) { sharedPrefs.getString("app_lang", "ru") ?: "ru" }
+    val isEnglish = currentLang != "ru"
+
+    val sections = remember(isEnglish) {
+        val markdownText = if (isEnglish) MethodologyDataEn.text else MethodologyData.text
+        parseMethodologyMarkdown(markdownText, isEnglish)
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Официальная Методика", color = colors.primaryText, fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.methodology_title), color = colors.primaryText, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Закрыть", tint = colors.primaryText)
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.dismiss_dialog), tint = colors.primaryText)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -206,13 +216,13 @@ fun MethodologyViewerScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Методика выявления признаков использования средств обхода блокировок на клиентских устройствах. Распознанный текст в формате Markdown.",
+                            text = stringResource(R.string.methodology_card_desc),
                             color = colors.secondaryText,
                             fontSize = 14.sp
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Источник: Профсоюз работников IT",
+                            text = stringResource(R.string.methodology_source),
                             color = colors.primaryAction,
                             modifier = Modifier.clickable {
                                 uriHandler.openUri("https://t.me/ruitunion/893")
@@ -223,7 +233,7 @@ fun MethodologyViewerScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Исходный код (GitHub)",
+                            text = stringResource(R.string.methodology_source_code),
                             color = colors.primaryAction,
                             modifier = Modifier.clickable {
                                 uriHandler.openUri("https://github.com/Kasumicic/vpn-inspector")
@@ -275,7 +285,7 @@ fun ExpandableMethodologySection(section: MethodologySection, colors: AppColors)
                 )
                 Icon(
                     imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                    contentDescription = "Развернуть",
+                    contentDescription = stringResource(R.string.methodology_expand),
                     tint = colors.primaryAction
                 )
             }

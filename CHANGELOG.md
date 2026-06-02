@@ -1,60 +1,59 @@
-## [1.4.0] - Полное соответствие методичке, оптимизация под мобильные сети и расширение баз
+# Changelog
 
-### 🔬 Что нового:
-- **Резервное определение IP**: Реализован фоллбек на сервис `api64.ipify.org` для надежного определения IP-адреса пользователя при сетевых сбоях на основном сервисе.
-- **Интерактивный статус проверок (10 шагов)**: Внедрено пошаговое отображение текущего прогресса сканирования прямо на главном экране (например, "Анализ интерфейсов (6/10)...").
-- **Новые детекты согласно методичке РКН**:
-  - **Системные Proxy**: Проверка настроек прокси через свойства `System.getProperty("http.proxyHost")` и др.
-  - **Флаг Capabilities NOT_VPN**: Проверка наличия/отсутствия флага `NET_CAPABILITY_NOT_VPN` у активной сети.
-- **Многократное расширение списка детектируемых VPN-клиентов**:
-  - В базу сканирования прямых признаков добавлены популярные утилиты обхода блокировок: *ByeDPI*, *AmneziaVPN*, *TunnelBear*, *Windscribe*, *Tor Browser*, *Orbot (Tor)*, *АнтиЗабор*, *Zaborona VPN* и др.
-  - Добавлено разрешение `QUERY_ALL_PACKAGES` и обновлен блок `<queries>` в `AndroidManifest.xml`, что полностью решило проблему невидимости VPN-пакетов на Android 11+.
-- **Ссылка на репозиторий**: На экранах "О приложении" и методики добавлена прямая ссылка на репозиторий GitHub (`https://github.com/Kasumicic/vpn-inspector`).
+All notable changes to this project will be documented in this file.
 
-### ⚙️ Исправления и отказоустойчивость:
-- **Корректный статус при сетевых ошибках GeoIP**: В случае таймаута или ошибки сети GeoIP-модуль теперь переводится в статус предупреждения `ERROR` (выделяется оранжевым/желтым предупреждающим знаком), исключая ложное отображение зеленого статуса `SUCCESS` (Чисто) при сбое связи.
-- **Повышение стабильности**: Добавлены дополнительные try-catch обертки и безопасные проверки `VpnTransportInfo` через рефлексию имени класса на старых версиях Android (до API 29).
+## [1.5.0] - Real IPv6 Leak Detection Added
 
-## [1.3.0] - Добавлен анализ задержек и мелкие исправления
+### 🔬 What's New:
+- **Real IPv6 Leak Detector** (Step 11/11): Implemented intelligent checking of VPN routing vulnerabilities. The app initiates an active check to request an external IPv6 address via a dedicated, dual-stack or IPv6-only host and correlates its geolocation country with the IPv4 geolocation country.
+- **Intelligent Split-tunnel / Leak Analysis**: Compares IPv4 and IPv6 country locations. If they differ (for example, IPv4 points to US but IPv6 points to RU or another origin country), the app immediately signals an active real IP leak and provides remediation advice.
+- **Fail-safe Geolocation Resolve**: Integrated a multi-tiered fallback mechanism for IPv6 geolocation resolution (using Sypex Geo, ipapi.co, ipwho.is, and freeipapi.com) to guarantee high accuracy.
+- **Methodology Documentation Update**: Updated the interactive methodology section and in-app documentation to outline testing goals, mechanics, and mitigation of IPv6 leaks.
 
-### 🔬 Что нового:
-- **Анализ задержек (SNITCH)**: Внедрен новый модуль выявления VPN и Proxy на основе анализа сетевых задержек. Метод проверяет RTT (Round-Trip Time) до локальных и зарубежных узлов и выявляет аномальные задержки, свидетельствующие о возможной инкапсуляции трафика, а также выявляет локальные прокси-перехваты (аномально низкий ping).
-- **Экран "О приложении"**: В раздел с описанием проверок добавлена информация про проверку сетевых задержек.
-- **Новый GeoIP-провайдер Sypex Geo**: Перевели проверку GeoIP на быстрый сервис `api.sypexgeo.net` и снизили таймаут соединения до 15 секунд, что избавило от зависаний на нестабильном мобильном интернете.
-- **Маскировка запросов и мимикрия под браузер**: Добавлена отправка заголовка `User-Agent` легитимного мобильного браузера Chrome на Android.
-- **Приоритизация IPv6**: Внедрен кастомный DNS-резолвер `IPv6FirstDns` для первоочередного выполнения запросов через IPv6 на мобильных сетях операторов связи.
-### ⚙️ Исправления:
+## [1.4.0] - RKN Methodology Compliance & Mobile Performance Optimization
 
-- **Сохранение темы**: Исправлен баг, из-за которого выбранная пользователем цветовая тема (светлая/тёмная) сбрасывалась при перезапуске приложения. Теперь настройки темы сохраняются во внутреннем хранилище устройства.
-- **Очистка кода**: Из проекта полностью удалена платформа Firebase BOM и другие неиспользуемые библиотеки в файле ilbs.versions.toml. Приложение теперь на 100% состоит из свободного открытого кода 
+### 🔬 What's New:
+- **Sypex Geo Migration**: Switched primary GeoIP resolver to `api.sypexgeo.net` and optimized request timeouts (15 seconds limit) to eliminate hangs on low-quality mobile connections.
+- **Connection Spoofing**: Configured a legitimate Android Chrome User-Agent header for API requests to emulate browse traffic.
+- **IPv6 Resolve Priority**: Implemented a custom DNS resolver `IPv6FirstDns` prioritizing IPv6 queries over carrier mobile networks where IPv6 is present.
+- **Fail-safe IP Extraction**: Added automatic fallback to `api64.ipify.org` for robust public IP address retrieval during primary service outages.
+- **Step-by-Step Progress Tracking**: Introduced real-time scan progress feedback directly on the Home screen dashboard (e.g. "Scanning local interfaces (7/11)...").
+- **Extended Detection Checks (RKN/Methodology compliance)**:
+  - **System-level Proxies**: Analyzes JVM properties like `System.getProperty("http.proxyHost")` and network parameters.
+  - **Capabilities `NOT_VPN` check**: Inspects whether the active connection capability flags contain `NET_CAPABILITY_NOT_VPN`.
+- **Expanded Known VPN Target Database**:
+  - Significantly expanded direct target scanning package identifiers to detect installed apps like *ByeDPI*, *AmneziaVPN*, *TunnelBear*, *Windscribe*, *Tor Browser*, *Orbot (Tor)*, *AntiZabor*, *Zaborona VPN*, etc.
+  - Added queries block updates and `QUERY_ALL_PACKAGES` permission in `AndroidManifest.xml` to regain visibility on Android 11+.
+- **GitHub Reference Link**: Added interactive GitHub repository link in both the "About" and "Methodology" sections.
 
-## [1.2.0] - Релиз v1.2.0 — Новый API-провайдер, кастомная иконка и стабильная подпись
+### ⚙️ Fixes & Reliability:
+- **Network Error State Treatment**: Network timeouts or failures on GeoIP resolve now correctly yield an orange `WARNING` / `ERROR` indicator instead of mistakenly displaying a green `SUCCESS` check.
+- **Target SDK Compatibility**: Implemented Class-reflection wrapper fallback on legacy Android environments (< API 29) to safely retrieve `VpnTransportInfo` details.
 
-⚠️ **ВАЖНОЕ ПРЕДУПРЕЖДЕНИЕ: Обязательно удалите старую версию!**
-Мы перешли на официальную подпись приложения собственным релизным ключом (`release.jks`). Поскольку предыдущая публичная версия была подписана стандартным отладочным ключом (debug), это обновление не сможет установиться поверх неё из-за конфликта подписей Android.
+## [1.3.0] - Latency Analysis (SNITCH) & Saved State Management
 
-**Что нужно сделать:**
-1. Полностью удалите старую версию VPN Inspector с вашего устройства.
-2. Установите новый APK-файл из этого релиза.
-> *Все последующие обновления (v1.3 и далее) будут устанавливаться нормально и без удаления данных.*
+### 🔬 What's New:
+- **SNITCH Latency Analysis**: Developed a system-level RTT (Round-Trip Time) analysis module. Measures physical route delays to regional and international locations to detect tunneling anomalies and proxy intercepts.
+- **About App Information**: Expanded descriptive breakdowns on active scans to cover Latency analysis under the Methodology definitions.
 
-### 🔬 Что нового:
-- **Безопасный GeoIP (Переход на ipwho.is)**: Получение информации об IP-адресах теперь происходит через новый надежный сервис по защищенному протоколу HTTPS (вместо старого незащищенного HTTP-соединения).
-- **Кастомная адаптивная иконка**: Приложение получило собственную уникальную иконку со встроенной поддержкой адаптивных форматов Android (Adaptive Icons). Она будет корректно отображаться на любых лаунчерах.
+### ⚙️ Fixes:
+- **State Persistence**: Resolved an issue where user theme selections (Light vs. Dark mode) reset on application launch. Theme states are now fully persisted in private Shared Preferences.
 
-### ⚙️ Технические подробности и исправления:
-- **Улучшен парсинг данных**: Настроен `KotlinJsonAdapterFactory` для библиотеки Moshi, что устранило проблемы и падения при разборе сетевых ответов от API.
-- **Стабилизация сборки (Target/Compile SDK 34)**:
-    - Обновлены настройки `build.gradle.kts` для обеспечения совместимости.
-    - Выровнена совместимость JVM-таргетов до Java 11.
-    - Отключены избыточные плагины и включены необходимые флаги AndroidX, благодаря чему процесс сборки больше не падает с ошибками конфигурации `debugCompileClasspath`.
-- **Исправление сборщика AAPT**: Решена проблема с видимостью ресурсов иконки (`ic_launcher`), из-за которой ранее не удавалось собрать проект.
+## [1.2.0] - Release 1.2.0 — Secure API Provider, Custom Adaptive Icon & Production Signing
 
-### 📋 Полный список изменений:
-- **Добавлено**: Поддержка безопасного HTTPS-провайдера GeoIP (`ipwho.is`).
-- **Добавлено**: Кастомная адаптивная иконка приложения.
-- **Добавлено**: Конфигурация для локальной сборки под релизным ключом.
-- **Изменено**: Таргет компиляции установлен на SDK 34 / Java 11 для повышения стабильности сборки.
-- **Исправлено**: Проблемы с парсингом JSON-ответов Moshi при сетевых запросах.
-- **Исправлено**: Падение компилятора Kotlin на этапе `compileDebugKotlin`.
-- **Исправлено**: Ошибка сборщика AAPT при обработке ресурсов иконки.
+### ⚠️ IMPORTANT NOTICE: Previous Debug Build Conflict
+We have migrated to release signing configuration (`release.jks`). Since the previous development build was signed with standard Android debug credentials, this update **will conflict** during installation.
+
+**Actions Required:**
+1. Uninstall any older iterations of the *VPN Inspector* app from your device.
+2. Install the new APK file download.
+> *Any future updates (v1.3.0 and up) will install automatically without requiring uninstallation.*
+
+### 🔬 What's New:
+- **Secure GeoIP (ipwho.is Migration)**: Re-routed GeoIP queries through secure `HTTPS` protocol endpoints to preserve communication privacy.
+- **Custom Adaptive Launcher Icon**: Replaced default launcher assets with custom high-contrast adaptive icons fitting system environments across launchers.
+
+### ⚙️ Fixes:
+- **Moshi Parsing Reliability**: Configured reflective `KotlinJsonAdapterFactory` globally on Moshi network bindings to handle dynamic API layouts without crashing.
+- **Java 11 Compliant Target**: Upgraded configuration parameters aligning compilation and target levels (SDK 34 / Java 11) for build stability.
+- **Resource Visibility**: Patched asset compile issues where AAPT would occasionally fail identifying launcher structures.
