@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
@@ -42,6 +43,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kasumic.vpndetector.scanner.ScanResult
 import com.kasumic.vpndetector.ui.theme.MyApplicationTheme
+import android.content.Context
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Star
 
 data class AppColors(
     val background: Color,
@@ -97,24 +102,69 @@ val LightAppColors = AppColors(
 val LocalAppColors = staticCompositionLocalOf { DarkAppColors }
 
 class MainActivity : ComponentActivity() {
+
+    override fun attachBaseContext(newBase: Context) {
+        val sharedPrefs = newBase.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val lang = sharedPrefs.getString("app_lang", null)
+        if (lang != null) {
+            super.attachBaseContext(LocaleHelper.setLocale(newBase, lang))
+        } else {
+            super.attachBaseContext(newBase)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        val sharedPrefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val lang = sharedPrefs.getString("app_lang", "ru") ?: "ru"
+        LocaleHelper.updateResourcesLegacy(this, lang)
+        
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val sharedPrefs = getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
 
         setContent {
             var isDarkTheme by remember { mutableStateOf(sharedPrefs.getBoolean("is_dark_theme", true)) }
+            var hasCompletedOnboarding by remember {
+                mutableStateOf(sharedPrefs.contains("app_lang") && sharedPrefs.contains("target_region"))
+            }
             val colors = if (isDarkTheme) DarkAppColors else LightAppColors
 
             CompositionLocalProvider(LocalAppColors provides colors) {
-                MyApplicationTheme(darkTheme = isDarkTheme) {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = colors.background
-                    ) {
-                        MainScreen(isDarkTheme) { newTheme ->
-                            isDarkTheme = newTheme
-                            sharedPrefs.edit().putBoolean("is_dark_theme", newTheme).apply()
+                if (!hasCompletedOnboarding) {
+                    MyApplicationTheme(darkTheme = isDarkTheme) {
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = colors.background
+                        ) {
+                            OnboardingScreen(
+                                isDarkTheme = isDarkTheme,
+                                onCompleted = { selectedLang, selectedRegion ->
+                                    sharedPrefs.edit()
+                                        .putString("app_lang", selectedLang)
+                                        .putString("target_region", selectedRegion)
+                                        .apply()
+                                    LocaleHelper.updateResourcesLegacy(this@MainActivity, selectedLang)
+                                    hasCompletedOnboarding = true
+                                    recreate()
+                                }
+                            )
+                        }
+                    }
+                } else {
+                    MyApplicationTheme(darkTheme = isDarkTheme) {
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = colors.background
+                        ) {
+                            MainScreen(
+                                isDarkTheme = isDarkTheme,
+                                onThemeChange = { newTheme ->
+                                    isDarkTheme = newTheme
+                                    sharedPrefs.edit().putBoolean("is_dark_theme", newTheme).apply()
+                                },
+                                onPrefsChanged = {
+                                    recreate()
+                                }
+                            )
                         }
                     }
                 }
@@ -124,8 +174,10 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
-    var selectedTab by remember { mutableStateOf(0) }
+fun MainScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit, onPrefsChanged: () -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val sharedPrefs = remember(context) { context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE) }
+    var selectedTab by remember { mutableStateOf(sharedPrefs.getInt("selected_tab", 0)) }
     val colors = LocalAppColors.current
 
     Scaffold(
@@ -137,10 +189,13 @@ fun MainScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
                 contentColor = colors.secondaryText,
             ) {
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Search, contentDescription = "Проверка") },
-                    label = { Text("Проверка") },
+                    icon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.tab_scan)) },
+                    label = { Text(stringResource(R.string.tab_scan)) },
                     selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
+                    onClick = { 
+                        selectedTab = 0 
+                        sharedPrefs.edit().putInt("selected_tab", 0).apply()
+                    },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = colors.navSelectedIcon,
                         selectedTextColor = colors.navSelectedText,
@@ -150,10 +205,13 @@ fun MainScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
                     )
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Settings, contentDescription = "Настройки") },
-                    label = { Text("Настройки и Инфо") },
+                    icon = { Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.tab_settings)) },
+                    label = { Text(stringResource(R.string.tab_settings)) },
                     selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
+                    onClick = { 
+                        selectedTab = 1 
+                        sharedPrefs.edit().putInt("selected_tab", 1).apply()
+                    },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = colors.navSelectedIcon,
                         selectedTextColor = colors.navSelectedText,
@@ -168,7 +226,7 @@ fun MainScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
         Box(modifier = Modifier.padding(innerPadding)) {
             when (selectedTab) {
                 0 -> VpnScannerApp()
-                1 -> SettingsAndAboutScreen(isDarkTheme, onThemeChange)
+                1 -> SettingsAndAboutScreen(isDarkTheme, onThemeChange, onPrefsChanged)
             }
         }
     }
@@ -176,7 +234,7 @@ fun MainScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
+fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit, onPrefsChanged: () -> Unit) {
     val colors = LocalAppColors.current
     var showMethodology by remember { mutableStateOf(false) }
     val uriHandler = LocalUriHandler.current
@@ -187,12 +245,12 @@ fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Uni
     ) {
         Icon(Icons.Default.Info, contentDescription = null, tint = colors.primaryAction, modifier = Modifier.size(64.dp))
         Spacer(modifier = Modifier.height(16.dp))
-        Text("VPN Inspector", fontSize = 24.sp, color = colors.primaryText, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.app_name), fontSize = 24.sp, color = colors.primaryText, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-        Text("Версия 1.5", textAlign = TextAlign.Center, color = colors.secondaryText)
+        Text(stringResource(R.string.version_title), textAlign = TextAlign.Center, color = colors.secondaryText)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Исходный код",
+            text = stringResource(R.string.source_code),
             color = colors.primaryAction,
             textAlign = TextAlign.Center,
             modifier = Modifier.clickable { uriHandler.openUri("https://github.com/Kasumicic/vpn-inspector") },
@@ -201,56 +259,296 @@ fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Uni
         
         Spacer(modifier = Modifier.height(32.dp))
 
+        Text(
+            text = stringResource(R.string.settings_section_general),
+            color = colors.secondaryActionText,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.align(Alignment.Start)
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+
+        val context = androidx.compose.ui.platform.LocalContext.current
+        val sharedPrefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val currentLang = sharedPrefs.getString("app_lang", "ru") ?: "ru"
+        val currentRegion = sharedPrefs.getString("target_region", "RU") ?: "RU"
+
+        var showLanguageDialog by remember { mutableStateOf(false) }
+        var showRegionDialog by remember { mutableStateOf(false) }
+
         Card(
             modifier = Modifier.fillMaxWidth().border(1.dp, colors.border, RoundedCornerShape(16.dp)),
             colors = CardDefaults.cardColors(containerColor = colors.surface),
             shape = RoundedCornerShape(16.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Тёмная тема", color = colors.primaryText, fontSize = 18.sp, fontWeight = FontWeight.Medium)
-                Switch(
-                    checked = isDarkTheme,
-                    onCheckedChange = onThemeChange,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = colors.primaryActionText,
-                        checkedTrackColor = colors.primaryAction,
-                        uncheckedThumbColor = colors.secondaryText,
-                        uncheckedTrackColor = colors.border
+            Column(modifier = Modifier.padding(16.dp)) {
+                // Dark Theme Row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(stringResource(R.string.dark_theme), color = colors.primaryText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    Switch(
+                        checked = isDarkTheme,
+                        onCheckedChange = onThemeChange,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = colors.primaryActionText,
+                            checkedTrackColor = colors.primaryAction,
+                            uncheckedThumbColor = colors.secondaryText,
+                            uncheckedTrackColor = colors.border
+                        )
                     )
-                )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.border.copy(alpha = 0.5f)))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Language selection Row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showLanguageDialog = true }
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(stringResource(R.string.settings_language), color = colors.primaryText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                        Text(
+                            text = if (currentLang == "ru") "Русский" else "English",
+                            color = colors.secondaryText,
+                            fontSize = 14.sp
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        tint = colors.primaryAction
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.border.copy(alpha = 0.5f)))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Target Region selection Row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showRegionDialog = true }
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(stringResource(R.string.settings_target_region), color = colors.primaryText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                        Text(
+                            text = when (currentRegion) {
+                                "RU" -> "🇷🇺 Россия (RU)"
+                                "US" -> "🇺🇸 United States (US)"
+                                "DE" -> "🇩🇪 Germany (DE)"
+                                "KZ" -> "🇰🇿 Казахстан (KZ)"
+                                "UA" -> "🇺🇦 Украина (UA)"
+                                else -> "🏳️ $currentRegion"
+                            },
+                            color = colors.secondaryText,
+                            fontSize = 14.sp
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        tint = colors.primaryAction
+                    )
+                }
             }
+        }
+
+        if (showLanguageDialog) {
+            AlertDialog(
+                onDismissRequest = { showLanguageDialog = false },
+                containerColor = colors.surface,
+                title = { Text(stringResource(R.string.settings_language), color = colors.primaryText) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf("ru" to "Русский", "en" to "English").forEach { (code, name) ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        sharedPrefs.edit().putString("app_lang", code).apply()
+                                        LocaleHelper.updateResourcesLegacy(context, code)
+                                        showLanguageDialog = false
+                                        onPrefsChanged()
+                                    }
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(name, color = colors.primaryText)
+                                if (currentLang == code) {
+                                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.primaryAction)
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showLanguageDialog = false }) {
+                        Text(stringResource(R.string.dismiss_dialog), color = colors.primaryAction)
+                    }
+                }
+            )
+        }
+
+        if (showRegionDialog) {
+            var customCodeInput by remember { mutableStateOf(if (currentRegion !in listOf("RU", "US", "DE", "KZ", "UA")) currentRegion else "") }
+            var isCustomClicked by remember { mutableStateOf(currentRegion !in listOf("RU", "US", "DE", "KZ", "UA")) }
+            var isValError by remember { mutableStateOf(false) }
+
+            AlertDialog(
+                onDismissRequest = { showRegionDialog = false },
+                containerColor = colors.surface,
+                title = { Text(stringResource(R.string.settings_target_region), color = colors.primaryText) },
+                text = {
+                    Column(
+                        modifier = Modifier.verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val presets = listOf(
+                            "RU" to "🇷🇺 Россия (RU)",
+                            "US" to "🇺🇸 United States (US)",
+                            "DE" to "🇩🇪 Germany (DE)",
+                            "KZ" to "🇰🇿 Казахстан (KZ)",
+                            "UA" to "🇺🇦 Украина (UA)"
+                        )
+
+                        presets.forEach { (code, name) ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        sharedPrefs.edit().putString("target_region", code).apply()
+                                        showRegionDialog = false
+                                        onPrefsChanged()
+                                    }
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(name, color = colors.primaryText)
+                                if (!isCustomClicked && currentRegion == code) {
+                                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.primaryAction)
+                                }
+                            }
+                        }
+
+                        // Custom option
+                        Column {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable { isCustomClicked = true }
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(stringResource(R.string.custom_region_label), color = colors.primaryText)
+                                if (isCustomClicked) {
+                                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.primaryAction)
+                                }
+                            }
+
+                            if (isCustomClicked) {
+                                OutlinedTextField(
+                                    value = customCodeInput,
+                                    onValueChange = {
+                                        if (it.length <= 2) {
+                                            customCodeInput = it.uppercase().filter { ch -> ch.isLetter() }
+                                            isValError = false
+                                        }
+                                    },
+                                    placeholder = { Text("US") },
+                                    singleLine = true,
+                                    isError = isValError,
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = colors.primaryAction,
+                                        unfocusedBorderColor = colors.border,
+                                        focusedLabelColor = colors.primaryAction,
+                                        unfocusedLabelColor = colors.secondaryText
+                                    )
+                                )
+                                if (isValError) {
+                                    Text(
+                                        text = stringResource(R.string.custom_region_error),
+                                        color = MaterialTheme.colorScheme.error,
+                                        fontSize = 12.sp,
+                                        modifier = Modifier.padding(start = 12.dp, top = 4.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(onClick = { showRegionDialog = false }) {
+                            Text(stringResource(R.string.dismiss_dialog), color = colors.primaryAction)
+                        }
+                        if (isCustomClicked) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            TextButton(onClick = {
+                                if (customCodeInput.length != 2) {
+                                    isValError = true
+                                } else {
+                                    sharedPrefs.edit().putString("target_region", customCodeInput).apply()
+                                    showRegionDialog = false
+                                    onPrefsChanged()
+                                }
+                            }) {
+                                Text(stringResource(R.string.btn_save_and_continue), color = colors.primaryAction, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            )
         }
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        Text("О приложении", color = colors.secondaryActionText, fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+        Text(stringResource(R.string.about_app_title), color = colors.secondaryActionText, fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            "Приложение создано с целью демонстрации способов обнаружения VPN и Proxy согласно официально утвержденной методике. Инструмент призван показать, что для сокрытия факта обхода необходим комплексный подход и обход целого ряда независимых проверок.",
+            stringResource(R.string.about_app_desc),
             color = colors.secondaryText, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Justify
         )
 
         Spacer(modifier = Modifier.height(24.dp))
         
-        Text("Ключевые пункты методики:", color = colors.primaryText, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+        Text(stringResource(R.string.key_points_title), color = colors.primaryText, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
         Spacer(modifier = Modifier.height(8.dp))
 
         Column(modifier = Modifier.fillMaxWidth()) {
-            MethodologyBullet("• GeoIP", "Анализ на стороне сервера. Сравнение IP с репутационными базами.", colors)
-            MethodologyBullet("• Утечка IPv6 (IPv6 Leak)", "Сравнение геолокации IPv4 и IPv6 адресов для выявления трафика в обход VPN.", colors)
-            MethodologyBullet("• Системный VPN API", "Опрос системного API Android на наличие TRANSPORT_VPN и VpnTransportInfo.", colors)
-            MethodologyBullet("• Системные Proxy", "Выявление настроек прокси на основе системных свойств System.getProperty.", colors)
-            MethodologyBullet("• Прямые признаки (Пакеты)", "Поиск установленных известных VPN/Proxy-клиентов и инструментов обхода.", colors)
-            MethodologyBullet("• Флаг NOT_VPN", "Проверка наличия флага NET_CAPABILITY_NOT_VPN в активных сетевых подключениях.", colors)
-            MethodologyBullet("• Сетевые интерфейсы", "Поиск виртуальных адаптеров туннелирования (tun, tap, wg, ppp).", colors)
-            MethodologyBullet("• Аномалии MTU", "Анализ размера кадра (MTU) на следы инкапсуляции VPN-заголовков.", colors)
-            MethodologyBullet("• Локальные Proxy", "Проверка стандартных портов (Socks5/HTTP), открываемых клиентскими прокси.", colors)
-            MethodologyBullet("• Подмена IP", "Проверка выдачи фейковых локальных IP-адресов доменам (Fake-IP туннелирование).", colors)
-            MethodologyBullet("• Сетевые задержки (SNITCH)", "Сравнение пинга до национальных (RU) и зарубежных (EU) узлов.", colors)
+            MethodologyBullet(stringResource(R.string.bullet_geoip_title), stringResource(R.string.bullet_geoip_desc), colors)
+            MethodologyBullet(stringResource(R.string.bullet_ipv6_title), stringResource(R.string.bullet_ipv6_desc), colors)
+            MethodologyBullet(stringResource(R.string.bullet_system_vpn_title), stringResource(R.string.bullet_system_vpn_desc), colors)
+            MethodologyBullet(stringResource(R.string.bullet_system_proxy_title), stringResource(R.string.bullet_system_proxy_desc), colors)
+            MethodologyBullet(stringResource(R.string.bullet_direct_packages_title), stringResource(R.string.bullet_direct_packages_desc), colors)
+            MethodologyBullet(stringResource(R.string.bullet_not_vpn_title), stringResource(R.string.bullet_not_vpn_desc), colors)
+            MethodologyBullet(stringResource(R.string.bullet_interfaces_title), stringResource(R.string.bullet_interfaces_desc), colors)
+            MethodologyBullet(stringResource(R.string.bullet_mtu_title), stringResource(R.string.bullet_mtu_desc), colors)
+            MethodologyBullet(stringResource(R.string.bullet_local_proxy_title), stringResource(R.string.bullet_local_proxy_desc), colors)
+            MethodologyBullet(stringResource(R.string.bullet_fake_ip_title), stringResource(R.string.bullet_fake_ip_desc), colors)
+            MethodologyBullet(stringResource(R.string.bullet_latency_title), stringResource(R.string.bullet_latency_desc), colors)
         }
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -264,14 +562,14 @@ fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Uni
             ),
             shape = RoundedCornerShape(16.dp)
         ) {
-            Text("Читать Методичку", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.btn_read_methodology), fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.height(32.dp))
         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.border))
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text("Разработчик", color = colors.secondaryActionText, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.developer_title), color = colors.secondaryActionText, fontSize = 18.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
         
         Row(
@@ -296,6 +594,56 @@ fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Uni
             Column {
                 Text("Kasumicic", color = colors.primaryText, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Text("github.com/Kasumicic", color = colors.primaryAction, fontSize = 14.sp)
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .clickable { uriHandler.openUri("https://github.com/Kasumicic/vpn-inspector") }
+                .border(1.dp, colors.border, RoundedCornerShape(16.dp)),
+            colors = CardDefaults.cardColors(containerColor = colors.surface),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(colors.primaryAction.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = "Star Project",
+                        tint = colors.primaryAction,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text(
+                        text = stringResource(R.string.support_star_title),
+                        color = colors.primaryText,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.support_star_desc),
+                        color = colors.secondaryText,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp
+                    )
+                }
             }
         }
         
@@ -377,11 +725,11 @@ fun ResultDetailsDialog(result: ScanResult, onDismiss: () -> Unit) {
         },
         text = {
             Column {
-                Text("Описание:", fontWeight = FontWeight.Bold, color = colors.secondaryActionText)
+                Text(stringResource(R.string.test_tag_desc_label), fontWeight = FontWeight.Bold, color = colors.secondaryActionText)
                 Text(result.description, color = colors.secondaryText, fontSize = 14.sp)
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                Text("Показания:", fontWeight = FontWeight.Bold, color = colors.secondaryActionText)
+                Text(stringResource(R.string.test_tag_readings_label), fontWeight = FontWeight.Bold, color = colors.secondaryActionText)
                 val detailColor = when {
                     result.isRisky -> colors.error
                     result.isError -> colors.warning
@@ -391,14 +739,14 @@ fun ResultDetailsDialog(result: ScanResult, onDismiss: () -> Unit) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 if (result.isRisky && result.fixSuggestion.isNotEmpty()) {
-                    Text("Как обмануть детект:", fontWeight = FontWeight.Bold, color = colors.secondaryActionText)
+                    Text(stringResource(R.string.test_tag_fix_label), fontWeight = FontWeight.Bold, color = colors.secondaryActionText)
                     Text(result.fixSuggestion, color = colors.primaryText, fontSize = 14.sp)
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Закрыть", color = colors.secondaryActionText)
+                Text(stringResource(R.string.dismiss_dialog), color = colors.secondaryActionText)
             }
         }
     )
@@ -423,7 +771,7 @@ fun HeaderSection(ipAddress: String) {
             modifier = Modifier.clickable { isBlurred = !isBlurred }.padding(8.dp)
         ) {
             Text(
-                text = "Текущий IP: ",
+                text = stringResource(R.string.header_current_ip),
                 color = colors.secondaryText,
                 fontSize = 16.sp
             )
@@ -443,10 +791,10 @@ fun StatusCard(uiState: ScannerUiState) {
 
     val statusText = when {
         uiState.isScanning -> uiState.currentScanStatus
-        !uiState.scanCompleted -> "Система готова.\nНажмите для анализа."
-        uiState.decision == DecisionState.DETECTED -> "ОБНАРУЖЕН ОБХОД"
-        uiState.decision == DecisionState.NEEDS_CHECK -> "ТРЕБУЕТСЯ ПРОВЕРКА"
-        else -> "СИСТЕМА ЧИСТА"
+        !uiState.scanCompleted -> stringResource(R.string.status_system_ready)
+        uiState.decision == DecisionState.DETECTED -> stringResource(R.string.status_bypass_detected)
+        uiState.decision == DecisionState.NEEDS_CHECK -> stringResource(R.string.status_check_required)
+        else -> stringResource(R.string.status_system_clean)
     }
 
     val statusColor = when {
@@ -560,17 +908,17 @@ fun ResultItem(result: ScanResult, onClick: (ScanResult) -> Unit) {
     }
 }
 
-fun formatScanSummary(uiState: ScannerUiState): String {
-    val sb = StringBuilder()
-    sb.append("🔍 VPN Inspector Scan Report\n\n")
-    sb.append("Итоговый статус: ")
+fun formatScanSummary(context: android.content.Context, uiState: ScannerUiState): String {
+    val sb = java.lang.StringBuilder()
+    sb.append(context.getString(R.string.share_report_title))
+    sb.append(context.getString(R.string.share_final_status))
     when (uiState.decision) {
-        DecisionState.DETECTED -> sb.append("🔴 ОБНАРУЖЕН ОБХОД\n")
-        DecisionState.NEEDS_CHECK -> sb.append("🟡 ТРЕБУЕТСЯ ПРОВЕРКА\n")
-        else -> sb.append("🟢 СИСТЕМА ЧИСТА\n")
+        DecisionState.DETECTED -> sb.append(context.getString(R.string.share_result_detected))
+        DecisionState.NEEDS_CHECK -> sb.append(context.getString(R.string.share_result_needs_check))
+        else -> sb.append(context.getString(R.string.share_result_clean))
     }
-    sb.append("Trust Score: ${uiState.trustScore}%\n\n")
-    sb.append("Результаты проверок:\n")
+    sb.append(context.getString(R.string.share_trust_score, uiState.trustScore.toString()))
+    sb.append(context.getString(R.string.share_results_header))
     for (result in uiState.results) {
         val icon = when {
             result.isRisky -> "🔴"
@@ -602,7 +950,7 @@ fun ScanAndActions(uiState: ScannerUiState, onScanClick: () -> Unit) {
             shape = RoundedCornerShape(28.dp)
         ) {
             Text(
-                text = if (uiState.isScanning) "Анализ в процессе..." else "ЗАПУСТИТЬ ПРОВЕРКУ",
+                text = if (uiState.isScanning) stringResource(R.string.btn_analysis_in_progress) else stringResource(R.string.btn_start_scan),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -611,13 +959,253 @@ fun ScanAndActions(uiState: ScannerUiState, onScanClick: () -> Unit) {
         if (uiState.scanCompleted && !uiState.isScanning) {
             IconButton(
                 onClick = {
-                    clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(formatScanSummary(uiState)))
-                    android.widget.Toast.makeText(context, "Результат скопирован", android.widget.Toast.LENGTH_SHORT).show()
+                    clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(formatScanSummary(context, uiState)))
+                    android.widget.Toast.makeText(context, context.getString(R.string.toast_result_copied), android.widget.Toast.LENGTH_SHORT).show()
                 },
                 modifier = Modifier.size(56.dp).background(colors.surface, RoundedCornerShape(16.dp))
             ) {
-                Icon(Icons.Default.Share, contentDescription = "Поделиться", tint = colors.primaryAction)
+                Icon(Icons.Default.Share, contentDescription = stringResource(R.string.share_content_description), tint = colors.primaryAction)
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun OnboardingScreen(
+    isDarkTheme: Boolean,
+    onCompleted: (lang: String, region: String) -> Unit
+) {
+    val colors = LocalAppColors.current
+    var selectedLanguage by remember { mutableStateOf("ru") }
+    var selectedRegion by remember { mutableStateOf("RU") }
+    var customRegionCode by remember { mutableStateOf("") }
+    var isCustomSelected by remember { mutableStateOf(false) }
+    var showError by remember { mutableStateOf(false) }
+
+    val presetRegions = listOf(
+        "RU" to ("🇷🇺 " + (if (selectedLanguage == "ru") "Россия" else "Russia")),
+        "US" to ("🇺🇸 " + (if (selectedLanguage == "ru") "США" else "USA")),
+        "DE" to ("🇩🇪 " + (if (selectedLanguage == "ru") "Германия" else "Germany")),
+        "KZ" to ("🇰🇿 " + (if (selectedLanguage == "ru") "Казахстан" else "Kazakhstan")),
+        "UA" to ("🇺🇦 " + (if (selectedLanguage == "ru") "Украина" else "Ukraine"))
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.background)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Search,
+            contentDescription = null,
+            tint = colors.primaryAction,
+            modifier = Modifier.size(80.dp)
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = if (selectedLanguage == "ru") "Добро пожаловать в VPN Inspector" else "Welcome to VPN Inspector",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = colors.primaryText,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = if (selectedLanguage == "ru") 
+                "Для продолжения выберите язык приложения и целевой регион для проверки GeoIP (страна, в которой вы ожидаете находиться без активного VPN)." 
+                else "Please select your preferred app language and target GeoIP region to start. The target region is the country you expect to be geolocated in when no VPN is active.",
+            fontSize = 14.sp,
+            color = colors.secondaryText,
+            textAlign = TextAlign.Center,
+            lineHeight = 20.sp
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Language block
+        Text(
+            text = if (selectedLanguage == "ru") "Язык приложения / Language" else "Application Language / Язык",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = colors.primaryText,
+            modifier = Modifier.align(Alignment.Start)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            listOf("ru" to "Русский", "en" to "English").forEach { (code, name) ->
+                val isSelected = selectedLanguage == code
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(50.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(if (isSelected) colors.primaryAction else colors.surface)
+                        .border(1.dp, if (isSelected) colors.primaryAction else colors.border, RoundedCornerShape(12.dp))
+                        .clickable { selectedLanguage = code }
+                        .padding(8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = name,
+                        color = if (isSelected) colors.primaryActionText else colors.primaryText,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Target Region block
+        Text(
+            text = if (selectedLanguage == "ru") "Целевой регион GeoIP / Target Region" else "Target GeoIP Region / Целевой регион",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = colors.primaryText,
+            modifier = Modifier.align(Alignment.Start)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            presetRegions.forEach { (code, name) ->
+                val isSelected = !isCustomSelected && selectedRegion == code
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(if (isSelected) colors.primaryAction.copy(alpha = 0.15f) else colors.surface)
+                        .border(1.dp, if (isSelected) colors.primaryAction else colors.border, RoundedCornerShape(12.dp))
+                        .clickable {
+                            isCustomSelected = false
+                            selectedRegion = code
+                            showError = false
+                        }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = name, color = colors.primaryText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    RadioButton(
+                        selected = isSelected,
+                        onClick = {
+                            isCustomSelected = false
+                            selectedRegion = code
+                            showError = false
+                        },
+                        colors = RadioButtonDefaults.colors(selectedColor = colors.primaryAction, unselectedColor = colors.secondaryText)
+                    )
+                }
+            }
+
+            // Custom Region Option
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(if (isCustomSelected) colors.primaryAction.copy(alpha = 0.15f) else colors.surface)
+                    .border(1.dp, if (isCustomSelected) colors.primaryAction else colors.border, RoundedCornerShape(12.dp))
+                    .clickable {
+                        isCustomSelected = true
+                        showError = false
+                    }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = if (selectedLanguage == "ru") "Другой (свой код)" else "Other (Custom code)",
+                    color = colors.primaryText,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                RadioButton(
+                    selected = isCustomSelected,
+                    onClick = {
+                        isCustomSelected = true
+                        showError = false
+                    },
+                    colors = RadioButtonDefaults.colors(selectedColor = colors.primaryAction, unselectedColor = colors.secondaryText)
+                )
+            }
+        }
+
+        if (isCustomSelected) {
+            Spacer(modifier = Modifier.height(12.dp))
+            OutlinedTextField(
+                value = customRegionCode,
+                onValueChange = { input ->
+                    if (input.length <= 2) {
+                        customRegionCode = input.uppercase().filter { it.isLetter() }
+                        showError = false
+                    }
+                },
+                label = { Text(if (selectedLanguage == "ru") "Код страны (2 буквы, например US)" else "Country code (2 letters, e.g. US)") },
+                placeholder = { Text("US") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                isError = showError,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = colors.primaryAction,
+                    unfocusedBorderColor = colors.border,
+                    focusedLabelColor = colors.primaryAction,
+                    unfocusedLabelColor = colors.secondaryText
+                )
+            )
+            if (showError) {
+                Text(
+                    text = if (selectedLanguage == "ru") "Код страны должен состоять ровно из 2 букв" else "Country code must be exactly 2 letters",
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 12.sp,
+                    modifier = Modifier.align(Alignment.Start).padding(top = 4.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Button(
+            onClick = {
+                val region = if (isCustomSelected) {
+                    if (customRegionCode.length != 2) {
+                        showError = true
+                        return@Button
+                    }
+                    customRegionCode
+                } else {
+                    selectedRegion
+                }
+                onCompleted(selectedLanguage, region)
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = colors.primaryAction,
+                contentColor = colors.primaryActionText
+            ),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Text(
+                text = if (selectedLanguage == "ru") "Сохранить и продолжить" else "Save and Continue",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }

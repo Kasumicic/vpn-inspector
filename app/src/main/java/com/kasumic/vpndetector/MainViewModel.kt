@@ -1,6 +1,7 @@
 package com.kasumic.vpndetector
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.kasumic.vpndetector.scanner.ScanResult
@@ -14,7 +15,7 @@ import kotlinx.coroutines.launch
 enum class DecisionState { CLEAN, NEEDS_CHECK, DETECTED }
 
 data class ScannerUiState(
-    val ipAddress: String = "Проверка...",
+    val ipAddress: String = "",
     val isScanning: Boolean = false,
     val currentScanStatus: String = "",
     val results: List<ScanResult> = emptyList(),
@@ -24,17 +25,27 @@ data class ScannerUiState(
 )
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
-    private val scanner = VpnScanner(application)
-    private val _uiState = MutableStateFlow(ScannerUiState())
-    val uiState: StateFlow<ScannerUiState> = _uiState.asStateFlow()
+    private val _uiState: MutableStateFlow<ScannerUiState>
+    val uiState: StateFlow<ScannerUiState>
+
+    private fun getLocalizedContext(): Context {
+        val sharedPrefs = getApplication<Application>().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val lang = sharedPrefs.getString("app_lang", "ru") ?: "ru"
+        return LocaleHelper.setLocale(getApplication(), lang)
+    }
 
     init {
+        val localContext = getLocalizedContext()
+        _uiState = MutableStateFlow(ScannerUiState(ipAddress = localContext.getString(R.string.checking_val)))
+        uiState = _uiState.asStateFlow()
         fetchIpOnly()
     }
 
     private fun fetchIpOnly() {
         viewModelScope.launch {
-            val (ip, _) = scanner.getIpInfo()
+            val localContext = getLocalizedContext()
+            val localScanner = VpnScanner(localContext)
+            val (ip, _) = localScanner.getIpInfo()
             _uiState.value = _uiState.value.copy(ipAddress = ip)
         }
     }
@@ -42,61 +53,64 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun startScan() {
         if (_uiState.value.isScanning) return
 
+        val localContext = getLocalizedContext()
+        val localScanner = VpnScanner(localContext)
+
         _uiState.value = _uiState.value.copy(
             isScanning = true,
             scanCompleted = false,
             results = emptyList(),
             decision = DecisionState.CLEAN,
             trustScore = 100,
-            currentScanStatus = "Настройка сканирования (0/11)"
+            currentScanStatus = localContext.getString(R.string.scan_step_0)
         )
 
         viewModelScope.launch {
             val scanResults = mutableListOf<ScanResult>()
             
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Анализ IP и GeoIP (1/11)...")
-            val (ip, ipResults) = scanner.getIpInfo()
+            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_1))
+            val (ip, ipResults) = localScanner.getIpInfo()
             scanResults.addAll(ipResults)
             _uiState.value = _uiState.value.copy(ipAddress = ip, results = scanResults.toList())
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка утечки IPv6 (2/11)...")
-            scanResults.add(scanner.checkIpv6Leak())
+            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_2))
+            scanResults.add(localScanner.checkIpv6Leak())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка системного VPN (3/11)...")
-            scanResults.add(scanner.checkDirectApi())
+            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_3))
+            scanResults.add(localScanner.checkDirectApi())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка системных Proxy (4/11)...")
-            scanResults.add(scanner.checkSystemProxySettings())
+            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_4))
+            scanResults.add(localScanner.checkSystemProxySettings())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка пакетов (5/11)...")
-            scanResults.add(scanner.checkVpnApps())
+            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_5))
+            scanResults.add(localScanner.checkVpnApps())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка флага NOT_VPN (6/11)...")
-            scanResults.add(scanner.checkNotVpnCapability())
+            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_6))
+            scanResults.add(localScanner.checkNotVpnCapability())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка интерфейсов (7/11)...")
-            scanResults.add(scanner.checkInterfaces())
+            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_7))
+            scanResults.add(localScanner.checkInterfaces())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка MTU (8/11)...")
-            scanResults.add(scanner.checkMtuAnomalies())
+            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_8))
+            scanResults.add(localScanner.checkMtuAnomalies())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка локального прокси (9/11)...")
-            scanResults.add(scanner.checkLocalProxies())
+            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_9))
+            scanResults.add(localScanner.checkLocalProxies())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Проверка Fake-IP (10/11)...")
-            scanResults.add(scanner.checkFakeIp())
+            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_10))
+            scanResults.add(localScanner.checkFakeIp())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = "Анализ сетевой задержки (11/11)...")
-            scanResults.add(scanner.analyzeLatency())
+            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_11))
+            scanResults.add(localScanner.analyzeLatency())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
             
             // Calculate final verdict based on methodology table

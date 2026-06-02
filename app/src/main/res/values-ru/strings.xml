@@ -1,0 +1,192 @@
+<resources>
+    <string name="app_name">VPN Inspector</string>
+    <string name="tab_scan">Проверка</string>
+    <string name="tab_settings">Настройки и Инфо</string>
+    <string name="version_title">Версия 1.5</string>
+    <string name="source_code">Исходный код</string>
+    <string name="dark_theme">Тёмная тема</string>
+    <string name="about_app_title">О приложении</string>
+    <string name="about_app_desc">Приложение создано с целью демонстрации способов обнаружения VPN и Proxy согласно официально утвержденной методике. Инструмент призван показать, что для сокрытия факта обхода необходим комплексный подход и обход целого ряда независимых проверок.</string>
+    <string name="key_points_title">Ключевые пункты методики:</string>
+    <string name="bullet_geoip_title">• GeoIP</string>
+    <string name="bullet_geoip_desc">Анализ на стороне сервера. Сравнение IP с репутационными базами.</string>
+    <string name="bullet_ipv6_title">• Утечка IPv6 (IPv6 Leak)</string>
+    <string name="bullet_ipv6_desc">Сравнение геолокации IPv4 и IPv6 адресов для выявления трафика в обход VPN.</string>
+    <string name="bullet_system_vpn_title">• Системный VPN API</string>
+    <string name="bullet_system_vpn_desc">Опрос системного API Android на наличие TRANSPORT_VPN и VpnTransportInfo.</string>
+    <string name="bullet_system_proxy_title">• Системные Proxy</string>
+    <string name="bullet_system_proxy_desc">Выявление настроек прокси на основе системных свойств System.getProperty.</string>
+    <string name="bullet_direct_packages_title">• Прямые признаки (Пакеты)</string>
+    <string name="bullet_direct_packages_desc">Поиск установленных известных VPN/Proxy-клиентов и инструментов обхода.</string>
+    <string name="bullet_not_vpn_title">• Флаг NOT_VPN</string>
+    <string name="bullet_not_vpn_desc">Проверка наличия флага NET_CAPABILITY_NOT_VPN в активных сетевых подключениях.</string>
+    <string name="bullet_interfaces_title">• Сетевые интерфейсы</string>
+    <string name="bullet_interfaces_desc">Поиск виртуальных адаптеров туннелирования (tun, tap, wg, ppp).</string>
+    <string name="bullet_mtu_title">• Аномалии MTU</string>
+    <string name="bullet_mtu_desc">Анализ размера кадра (MTU) на следы инкапсуляции VPN-заголовков.</string>
+    <string name="bullet_local_proxy_title">• Локальные Proxy</string>
+    <string name="bullet_local_proxy_desc">Проверка стандартных портов (Socks5/HTTP), открываемых клиентскими прокси.</string>
+    <string name="bullet_fake_ip_title">• Подмена IP</string>
+    <string name="bullet_fake_ip_desc">Проверка выдачи фейковых локальных IP-адресов доменам (Fake-IP туннелирование).</string>
+    <string name="bullet_latency_title">• Сетевые задержки (SNITCH)</string>
+    <string name="bullet_latency_desc">Сравнение пинга до национальных (RU) и зарубежных (EU) узлов.</string>
+    
+    <string name="btn_read_methodology">Читать Методичку</string>
+    <string name="developer_title">Разработчик</string>
+    <string name="dismiss_dialog">Закрыть</string>
+    <string name="test_tag_desc_label">Описание:</string>
+    <string name="test_tag_readings_label">Показания:</string>
+    <string name="test_tag_fix_label">Как обмануть детект:</string>
+    
+    <string name="header_current_ip">Текущий IP: </string>
+    <string name="status_system_ready">Система готова.\nНажмите для анализа.</string>
+    <string name="status_bypass_detected">ОБНАРУЖЕН ОБХОД</string>
+    <string name="status_check_required">ТРЕБУЕТСЯ ПРОВЕРКА</string>
+    <string name="status_system_clean">СИСТЕМА ЧИСТА</string>
+    <string name="btn_analysis_in_progress">Анализ в процессе…</string>
+    <string name="btn_start_scan">ЗАПУСТИТЬ ПРОВЕРКУ</string>
+    <string name="toast_result_copied">Результат скопирован</string>
+    <string name="share_content_description">Поделиться</string>
+    <string name="unknown_val">Неизвестно</string>
+    <string name="checking_val">Проверка…</string>
+
+    <string name="scan_step_0">Настройка сканирования (0/11)</string>
+    <string name="scan_step_1">Анализ IP и GeoIP (1/11)…</string>
+    <string name="scan_step_2">Проверка утечки IPv6 (2/11)…</string>
+    <string name="scan_step_3">Проверка системного VPN (3/11)…</string>
+    <string name="scan_step_4">Проверка системных Proxy (4/11)…</string>
+    <string name="scan_step_5">Проверка пакетов (5/11)…</string>
+    <string name="scan_step_6">Проверка флага NOT_VPN (6/11)…</string>
+    <string name="scan_step_7">Проверка интерфейсов (7/11)…</string>
+    <string name="scan_step_8">Проверка MTU (8/11)…</string>
+    <string name="scan_step_9">Проверка локального прокси (9/11)…</string>
+    <string name="scan_step_10">Проверка Fake-IP (10/11)…</string>
+    <string name="scan_step_11">Анализ сетевой задержки (11/11)…</string>
+
+    <!-- Scan Results localization -->
+    <string name="geo_analysis_title">Анализ IP (GeoIP)</string>
+    <string name="geo_detail_suspicious">Подозрительный IP:\nСтрана: %1$s</string>
+    <string name="geo_detail_clean">Чистый IP (Ожидаемый регион: %1$s)</string>
+    <string name="geo_desc">Метод определяет регион IP на стороне сервера (GeoIP).</string>
+    <string name="geo_fix_suspicious">Используйте резидентные прокси или настройте маршрутизацию (Split Tunneling) на российские IP адреса.</string>
+    <string name="geo_fix_clean">Обход надежно скрыт на уровне GeoIP.</string>
+    <string name="geo_error_network">Ошибка сети</string>
+    <string name="geo_error_server">Не удалось получить серверный ответ с GeoIP.</string>
+    <string name="geo_error_prefix">Ошибка: %1$s</string>
+    <string name="geo_error_connect">Не удалось подключиться к API.</string>
+
+    <string name="direct_vpn_api_title">Системный VPN API</string>
+    <string name="direct_vpn_no_network">Нет активной сети</string>
+    <string name="direct_vpn_no_data">Нет данных</string>
+    <string name="direct_vpn_desc">Проверка системного флага VPN.</string>
+    <string name="direct_vpn_found">ОБНАРУЖЕН VPN %1$s</string>
+    <string name="direct_vpn_found_desc">Система напрямую сообщает о наличии активного VPN-туннеля.</string>
+    <string name="direct_vpn_fix">Используйте Proxy-режим (в обход VpnService) или VPN-клиенты с root-правами (например, iptables) для прозрачного перенаправления без системного флага.</string>
+    <string name="direct_vpn_clean">ЧИСТО</string>
+    <string name="direct_vpn_error">Ошибка: %1$s</string>
+
+    <string name="proxy_settings_title">Системные Proxy-настройки</string>
+    <string name="proxy_settings_found">ОБНАРУЖЕН PROXY (%1$s:%2$s)</string>
+    <string name="proxy_settings_desc">Выявление использования системного Proxy на основе системных свойств System.getProperty.</string>
+    <string name="proxy_settings_fix">Отключите системный прокси-сервер в настройках сети Android, чтобы трафик шел напрямую.</string>
+    <string name="proxy_settings_clean">ЧИСТО</string>
+
+    <string name="not_vpn_title">Флаг NOT_VPN в Capabilities</string>
+    <string name="not_vpn_missing">ОТСУТСТВУЕТ (Флаг NOT_VPN сброшен)</string>
+    <string name="not_vpn_no_network">Нет активной сети</string>
+    <string name="not_vpn_no_data">Нет данных о возможностях сети</string>
+    <string name="not_vpn_desc">Косвенный признак. Для обычных сетей этот флаг присутствует, при активном VPN отсутствует.</string>
+    <string name="not_vpn_fix">Используйте обходные пути на уровне сокетов, не регистрирующие VPN в системе.</string>
+    <string name="not_vpn_clean">ЧИСТО</string>
+
+    <string name="interfaces_title">Сетевые интерфейсы</string>
+    <string name="interfaces_found">НАЙДЕНЫ (%1$s)</string>
+    <string name="interfaces_desc">Косвенный признак. Наличие виртуальных интерфейсов (tun/tap/wg) может указывать на туннель.</string>
+    <string name="interfaces_fix">Отмените создание tun-интерфейса в настройках клиента (используйте чистый socks/http proxy), либо переименуйте интерфейс через root-доступ.</string>
+    <string name="interfaces_clean">ЧИСТО</string>
+    <string name="interfaces_desc_clean">Косвенная проверка на наличие виртуальных адаптеров туннелирования.</string>
+    <string name="interfaces_error">Ошибка чтения интерфейсов.</string>
+
+    <string name="app_packages_title">Пакеты приложений</string>
+    <string name="app_packages_found">НАЙДЕНЫ (%1$s)</string>
+    <string name="app_packages_desc">Прямой признак. Обнаружены установленные популярные VPN-клиенты.</string>
+    <string name="app_packages_fix">Используйте кастомные сборки/форки клиентов или скрывайте приложения через модули Magisk / App Hider.</string>
+    <string name="app_packages_clean">ЧИСТО</string>
+    <string name="app_packages_desc_clean">Проверка на наличие популярных установленных VPN-клиентов.</string>
+
+    <string name="mtu_anomalies_title">Аномалии MTU</string>
+    <string name="mtu_low">ПОНИЖЕН: %1$s</string>
+    <string name="mtu_desc">Косвенный признак. Пониженный MTU характерен для туннелированного трафика из-за инкапсуляции заголовков.</string>
+    <string name="mtu_fix">Отрегулируйте MTU виртуального интерфейса до стандартных значений (1420-1500) в расширенных настройках VPN-клиента.</string>
+    <string name="mtu_clean">ЧИСТО</string>
+    <string name="mtu_desc_clean">Анализ размера кадра (MTU) на косвенные следы инкапсуляции VPN.</string>
+    <string name="mtu_error">Ошибка: %1$s</string>
+
+    <string name="local_proxy_title">Локальные Прокси</string>
+    <string name="local_proxy_open">ОТКРЫТЫ ПОРТЫ (%1$s)</string>
+    <string name="local_proxy_desc">Косвенный вызов. Открытые порты могут указывать на работу локального Proxy/Xray/Socks5 сервера.</string>
+    <string name="local_proxy_fix">Смените стандартные порты входящего подключения (1080, 10808) на случайные динамические порты (например, 49211) в конфигурации клиента.</string>
+    <string name="local_proxy_clean">ЧИСТО</string>
+    <string name="local_proxy_desc_clean">Анализ открытых локальных портов, характерных для proxy-клиентов.</string>
+
+    <string name="fake_ip_title">Подмена Fake-IP</string>
+    <string name="fake_ip_detected">ОБНАРУЖЕНО (%1$s)</string>
+    <string name="fake_ip_desc">Косвенный признак. VPN-ядро (например, Xray/sing-box) подменяет IP для перехвата трафика.</string>
+    <string name="fake_ip_fix">Отключите функцию Fake-IP в конфигурации DNS (переключитесь на Real-IP, redir-host или remote DNS).</string>
+    <string name="fake_ip_clean">ЧИСТО</string>
+    <string name="fake_ip_desc_clean">Проверка на выдачу фейковых внутренних IP-адресов популярным серверам (Fake-IP туннелирование).</string>
+
+    <string name="snitch_title">Сетевые задержки (SNITCH)</string>
+    <string name="snitch_timeout">Таймаут (сеть недоступна)</string>
+    <string name="snitch_desc_rtt">Анализ RTT до контрольных точек.</string>
+    <string name="snitch_timeout_fix">Сеть недоступна, либо порты заблокированы.</string>
+    <string name="snitch_intercept">ПЕРЕХВАТ ПРОКСИ (RU:%1$sмс / EU:%2$sмс)</string>
+    <string name="snitch_intercept_desc">Слишком низкий пинг (&lt;= 2мс) невозможен в реальной сети и указывает на перехват TCP локальным прокси-сервером.</string>
+    <string name="snitch_intercept_fix">Исключите трафик проверочных серверов из TUN/Proxy перехвата (используйте прямую маршрутизацию).</string>
+    <string name="snitch_anomaly">АНОМАЛИЯ (RU:%1$sмс / EU:%2$sмс)</string>
+    <string name="snitch_anomaly_desc">Аномально высокая задержка до локального (RU) узла по сравнению с зарубежным (EU) узлом свидетельствует об использовании VPN.</string>
+    <string name="snitch_anomaly_fix">Отключите VPN или добавьте локальные хосты (ya.ru) в исключения.</string>
+    <string name="snitch_clean">В пределах нормы (RU:%1$sмс / EU:%2$sмс)</string>
+    <string name="snitch_desc_rtt_clean">Сравнение пинга (TCP RTT) для национальных и зарубежных узлов.</string>
+
+    <string name="ipv6_leak_title">Утечка IPv6 (IPv6 Leak)</string>
+    <string name="ipv6_leak_detected">УТЕЧКА! IPv4 зашифрован (%1$s), но IPv6 идет напрямую (%2$s, Страна: %3$s)</string>
+    <string name="ipv6_leak_safe">БЕЗОПАСНО (IPv6: %1$s, Страна: %2$s совпадает с IPv4: %3$s)</string>
+    <string name="ipv6_leak_clean_active">ЧИСТО (IPv6 активен: %1$s, Страна: %2$s)</string>
+    <string name="ipv6_leak_clean_unknown">ЧИСТО (IPv6: %1$s, но страна не определена - утечка маловероятна)</string>
+    <string name="ipv6_leak_clean_no_addr">ЧИСТО (IPv6 соединение не вернуло адрес)</string>
+    <string name="ipv6_leak_clean_host_unreachable">ЧИСТО (IPv6-only хост недоступен)</string>
+    <string name="ipv6_leak_clean_not_supported">ЧИСТО (IPv6 не поддерживается или заблокирован туннелем)</string>
+    <string name="ipv6_leak_desc">Определение утечки реального IPv6-адреса. Распространенная уязвимость VPN, когда IPv6 трафик идет мимо туннеля.</string>
+    <string name="ipv6_leak_desc_clean">Анализ утечки реального IPv6-адреса через незащищенные маршруты.</string>
+    <string name="ipv6_leak_fix">Отключите IPv6 в настройках мобильной сети вашего устройства или в настройках роутера. Некоторые VPN клиенты также позволяют принудительно блокировать нетуннелируемый IPv6 трафик.</string>
+
+    <string name="share_report_title">🔍 VPN Inspector Scan Report\n\n</string>
+    <string name="share_final_status">Итоговый статус: </string>
+    <string name="share_result_detected">🔴 ОБНАРУЖЕН ОБХОД\n</string>
+    <string name="share_result_needs_check">🟡 ТРЕБУЕТСЯ ПРОВЕРКА\n</string>
+    <string name="share_result_clean">🟢 СИСТЕМА ЧИСТА\n</string>
+    <string name="share_trust_score">Trust Score: %1$s%%\n\n</string>
+    <string name="share_results_header">Результаты проверок:\n</string>
+
+    <!-- Methodology Viewer localization -->
+    <string name="methodology_title">Официальная Методика</string>
+    <string name="methodology_close">Закрыть</string>
+    <string name="methodology_card_desc">Методика выявления признаков использования средств обхода блокировок на клиентских устройствах. Распознанный текст в формате Markdown.</string>
+    <string name="methodology_source">Источник: Профсоюз работников IT</string>
+    <string name="methodology_source_code">Исходный код (GitHub)</string>
+    <string name="methodology_expand">Развернуть</string>
+    <string name="intro_section_name">Введение</string>
+
+    <string name="settings_section_general">Основные настройки</string>
+    <string name="settings_language">Язык приложения / Language</string>
+    <string name="settings_target_region">Целевой регион GeoIP</string>
+    <string name="onboarding_title">Добро пожаловать в VPN Inspector</string>
+    <string name="onboarding_desc">Пожалуйста, выберите предпочитаемый язык приложения и целевой регион GeoIP перед началом работы. Целевой регион — это страна, в которой вы ожидаете находиться без активного подключения к VPN.</string>
+    <string name="btn_save_and_continue">Сохранить и продолжить</string>
+    <string name="custom_region_label">Свой код страны (например, RU, US)</string>
+    <string name="custom_region_placeholder">Двухбуквенный ISO-код</string>
+    <string name="custom_region_error">Код страны должен состоять ровно из 2 букв (например, RU)</string>
+    <string name="support_star_title">Поддержите проект звездой! ⭐</string>
+    <string name="support_star_desc">Если вам нравится наше приложение и вы находите его полезным, пожалуйста, поддержите нас, поставив звезду нашему репозиторию на GitHub.</string>
+</resources>

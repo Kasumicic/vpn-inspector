@@ -3,7 +3,11 @@
   
   <h1>🛡️ VPN Inspector</h1>
   <p>
-    <b>Анализатор обходов блокировок: демонстрация методов обнаружения VPN и Proxy на мобильных устройствах.</b>
+    <b>Bypass Analyzer: Demonstration of VPN and Proxy detection methods on mobile devices.</b>
+  </p>
+
+  <p>
+    <a href="README_RU.md">🇷🇺 Прочитать на русском языке</a>
   </p>
 
   <p>
@@ -16,58 +20,77 @@
 
 ---
 
-## 📖 О проекте
+## 📸 Screenshots
 
-**VPN Inspector** — это специализированное Android-приложение, созданное для демонстрации и глубокого анализа методов обнаружения средств обхода блокировок. Оно реализует современные проверки, основанные на официально утвержденной методике выявления VPN и Proxy-серверов. 
+To see the application in action, refer to the screenshots below. 
 
-Главная цель приложения — наглядно показать, как именно различные сервисы могут определять факт использования туннелей или прокси, и доказать, что для надежного сокрытия трафика необходим комплексный подход.
+### English Interface
+<div align="center">
+  <img src="docs/screenshots/main_en.png" width="300" alt="VPN Inspector Main Screen"/>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="docs/screenshots/settings_en.png" width="300" alt="VPN Inspector Settings Screen"/>
+</div>
 
-## 🎯 Для кого этот проект?
+---
 
-* 👨‍💻 **Разработчики и тестировщики**, интересующиеся сетевой безопасностью и механизмами туннелирования.
-* 🔐 **Пользователи**, желающие проверить надежность своего VPN-подключения или Proxy-сервера.
-* 🎓 **IT-энтузиасты**, изучающие механизмы работы Android API с сетевыми интерфейсами.
+## 📖 About the Project
 
-## 🔬 Что проверяет приложение?
+**VPN Inspector** is a premium Android utility designed to demonstrate and closely analyze the mechanisms of VPN and Proxy detection. It implements real-world scanning checks based on officially approved methodologies for detecting bypass tools.
 
-Приложение проводит многоуровневый анализ, разделенный на категории риска:
+The primary objective of the application is to show how different systems can identify when communication is tunneled, proving that comprehensive checks are necessary to properly detect bypass tools.
 
-* 🌍 **GeoIP (Анализ на стороне сервера)** — сравнение вашего провайдера и IP-адреса с репутационными базами (проверка на хостинг, прокси и нецелевой регион).
-* ⚙️ **Системный VPN API** — прямой опрос `NetworkCapabilities` на наличие активного флага VPN.
-* 🖧 **Обнаружение интерфейсов** — поиск виртуальных адаптеров туннелирования (например, `tun`, `tap`, `wg`).
-* 📦 **Анализ MTU** — выявление аномально низкого размера сетевых пакетов (MTU), характерного для инкапсуляции при использовании VPN.
-* 🛡️ **Локальные Proxy** — сканирование открытых портов (например, `1080`, `10808`), используемых популярными proxy-клиентами.
-* 🎭 **Подмена IP (Fake-IP)** — проверка выдачи фейковых локальных IP-адресов популярным серверам.
-* 📱 **Установленные пакеты** — сканирование установленных на устройстве известных VPN-клиентов (WireGuard, ProtonVPN, v2rayNG, Shadowsocks и др.).
+## 🎯 Target Audience
 
-> **💡 Методика:** В приложение встроен раздел **"Методичка"**, содержащий исчерпывающую теоретическую базу по каждому из методов обнаружения.
+* 👨‍💻 **Developers and Security Researchers** interested in network isolation, tunneling mechanisms, and mobile security.
+* 🔐 **Privacy Enthusiasts** wishing to evaluate the integrity of their current VPN service or Proxy configurations.
+* 🎓 **Students and Academics** examining low-level network interface properties on Android OS.
 
-## 🛠 Технологический стек
+## 🔬 Implemented Verification Suite
 
-* **Язык разработки:** Kotlin
-* **Интерфейс:** Jetpack Compose, Material Design 3 (Светлая и тёмная темы)
-* **Сеть/API:** Retrofit, Moshi
-* **Асинхронность:** Kotlin Coroutines & Flow
-* **Изображения:** Coil
+The application runs a complete, multi-step detection suite composed of 11 distinct checks:
 
-## 🚀 Как запустить и собрать
+1. **IP & GeoIP Analysis (Server-side)**: Resolves the public IP address and matches it against database markers (identifies data centers, hosting providers, CDNs, and region mismatches).
+2. **Real IPv6 Leak Detector**: Actively queries a secure IPv6-only host to determine if IPv6 traffic bypasses the active VPN tunnel while IPv4 is tunneled.
+3. **ConnectivityManager VPN Flag**: Directly queries the system network capabilities for an active `TRANSPORT_VPN` adapter.
+4. **System-level Proxies**: Reads JVM configuration properties (such as `System.getProperty("http.proxyHost")`) to check for manual system proxification.
+5. **Known VPN Packages Scanning**: Safely inspects the device package collection for active or installed bypass applications (e.g., ByeDPI, AmneziaVPN, WireGuard, ShadowSocks, Tor).
+6. **Capabilities NOT_VPN Flag**: Checks for the absence of the custom `NET_CAPABILITY_NOT_VPN` capability flag on the primary internet transport.
+7. **Virtual Interface Detection**: Parses the Linux network bindings looking for virtual adaptors associated with tunneling protocols (such as `tun0`, `tap0`, `wg0`, `ppp0`).
+8. **MTU Size Analysis**: Calculates maximum transmission unit dimensions. Artificially low packet capacities are historically linked to packet encapsulation from VPN wrapping.
+9. **Active Local Proxy Ports**: Assesses open loopback sockets (`127.0.0.1`) corresponding to local traffic redirectors on common port frequencies.
+10. **Sandbox Fake-IP Detection**: Dispatches custom resolved lookups to check if spoofing nodes are outputting synthetic subnets.
+11. **SNITCH Network Latency Anomaly**: Measures physical route delay metrics between geographic regional and international endpoints to establish tunneling routing detours.
 
-Приложение можно собрать и протестировать с помощью [Android Studio](https://developer.android.com/studio).
+> **📚 Interactive Methodology:** The application bundles an interactive translation of the complete theoretical documentation on VPN/Proxy detection rules, available at any time.
+
+## 🛠 Technology Stack
+
+* **Language:** Kotlin 
+* **User Interface:** Jetpack Compose, Material Design 3 (Fully supporting Light & Dark themes)
+* **Networking/Moshi Serialization:** Retrofit 2, Moshi Converters with full fail-safes
+* **Concurrency:** Kotlin Coroutines & Asynchronous Flows
+* **Storage:** SharedPreferences for theme settings and scan options
+
+---
+
+## 🚀 Building and Running
+
+You can easily build the project using standard Gradle utilities or within Android Studio:
 
 ```bash
-# 1. Клонируйте репозиторий
+# 1. Clone the repository
 git clone https://github.com/Kasumicic/vpn-inspector.git
 cd vpn-inspector
 
-# 2. Соберите проект через Gradle
-./gradlew assembleDebug
+# 2. Build the Debug APK package
+gradle assembleDebug
 ```
-Готовый APK файл вы сможете найти в директории `app/build/outputs/apk/debug/`.
+The compiled APK file will be written to `app/build/outputs/apk/debug/app-debug.apk`.
 
 ---
 
 <div align="center">
   <img src="https://github.com/Kasumicic.png" width="60" style="border-radius:50%" />
   <br>
-  Разработано с ❤️ <b><a href="https://github.com/Kasumicic">Kasumicic</a></b>
+  Built with ❤️ by <b><a href="https://github.com/Kasumicic">Kasumicic</a></b>
 </div>

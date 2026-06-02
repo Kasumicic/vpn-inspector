@@ -1,3 +1,192 @@
 <resources>
     <string name="app_name">VPN Inspector</string>
+    <string name="tab_scan">Scan</string>
+    <string name="tab_settings">Settings &amp; Info</string>
+    <string name="version_title">Version 1.5</string>
+    <string name="source_code">Source Code</string>
+    <string name="dark_theme">Dark Theme</string>
+    <string name="about_app_title">About Application</string>
+    <string name="about_app_desc">This application was created to demonstrate the methods of detecting VPN and Proxy according to the officially approved methodology. The tool is designed to show that to hide the fact of circumvention, a comprehensive approach is required, bypassing a set of independent checks.</string>
+    <string name="key_points_title">Key points of methodology:</string>
+    <string name="bullet_geoip_title">• GeoIP</string>
+    <string name="bullet_geoip_desc">Server-side analysis. Comparison of IP with reputation databases.</string>
+    <string name="bullet_ipv6_title">• IPv6 Leak</string>
+    <string name="bullet_ipv6_desc">Comparison of IPv4 and IPv6 geolocations to detect bypass traffic.</string>
+    <string name="bullet_system_vpn_title">• System VPN API</string>
+    <string name="bullet_system_vpn_desc">Querying the Android billing API for TRANSPORT_VPN and VpnTransportInfo.</string>
+    <string name="bullet_system_proxy_title">• System Proxies</string>
+    <string name="bullet_system_proxy_desc">Detecting proxy settings based on System.getProperty system properties.</string>
+    <string name="bullet_direct_packages_title">• Direct Signs (Packages)</string>
+    <string name="bullet_direct_packages_desc">Search for installed known VPN/Proxy clients and bypass tools.</string>
+    <string name="bullet_not_vpn_title">• NOT_VPN Flag</string>
+    <string name="bullet_not_vpn_desc">Checking for the NET_CAPABILITY_NOT_VPN flag in active network connections.</string>
+    <string name="bullet_interfaces_title">• Network Interfaces</string>
+    <string name="bullet_interfaces_desc">Search for virtual tunneling adapters (tun, tap, wg, ppp).</string>
+    <string name="bullet_mtu_title">• MTU Anomalies</string>
+    <string name="bullet_mtu_desc">Analysis of frame size (MTU) for traces of VPN header encapsulation.</string>
+    <string name="bullet_local_proxy_title">• Local Proxies</string>
+    <string name="bullet_local_proxy_desc">Checking standard ports (Socks5/HTTP) opened by client proxies.</string>
+    <string name="bullet_fake_ip_title">• IP Spoofing</string>
+    <string name="bullet_fake_ip_desc">Checking if fake local IP addresses are returned to domains (Fake-IP tunneling).</string>
+    <string name="bullet_latency_title">• Network Latencies (SNITCH)</string>
+    <string name="bullet_latency_desc">Comparison of ping to national (RU) and European (EU) nodes.</string>
+    
+    <string name="btn_read_methodology">Read Manual</string>
+    <string name="developer_title">Developer</string>
+    <string name="dismiss_dialog">Close</string>
+    <string name="test_tag_desc_label">Description:</string>
+    <string name="test_tag_readings_label">Readings:</string>
+    <string name="test_tag_fix_label">How to bypass detection:</string>
+    
+    <string name="header_current_ip">Current IP: </string>
+    <string name="status_system_ready">System is ready.\nPress to analyze.</string>
+    <string name="status_bypass_detected">BYPASS DETECTED</string>
+    <string name="status_check_required">CHECK REQUIRED</string>
+    <string name="status_system_clean">SYSTEM IS CLEAN</string>
+    <string name="btn_analysis_in_progress">Analysis in progress…</string>
+    <string name="btn_start_scan">START SCAN</string>
+    <string name="toast_result_copied">Result copied</string>
+    <string name="share_content_description">Share</string>
+    <string name="unknown_val">Unknown</string>
+    <string name="checking_val">Checking…</string>
+
+    <string name="scan_step_0">Configuring scan (0/11)</string>
+    <string name="scan_step_1">IP &amp; GeoIP Analysis (1/11)…</string>
+    <string name="scan_step_2">Checking for IPv6 leakage (2/11)…</string>
+    <string name="scan_step_3">Checking system VPN (3/11)…</string>
+    <string name="scan_step_4">Checking system Proxies (4/11)…</string>
+    <string name="scan_step_5">Checking packages (5/11)…</string>
+    <string name="scan_step_6">Checking NOT_VPN flag (6/11)…</string>
+    <string name="scan_step_7">Checking interfaces (7/11)…</string>
+    <string name="scan_step_8">Checking MTU (8/11)…</string>
+    <string name="scan_step_9">Checking local proxy (9/11)…</string>
+    <string name="scan_step_10">Checking Fake-IP (10/11)…</string>
+    <string name="scan_step_11">Analyzing network latency (11/11)…</string>
+
+    <!-- Scan Results localization -->
+    <string name="geo_analysis_title">IP Analysis (GeoIP)</string>
+    <string name="geo_detail_suspicious">Suspicious IP:\nCountry: %1$s</string>
+    <string name="geo_detail_clean">Clean IP (Expected region: %1$s)</string>
+    <string name="geo_desc">The method determines the IP region on the server side (GeoIP).</string>
+    <string name="geo_fix_suspicious">Use residential proxies or configure split routing (Split Tunneling) to Russian IP addresses.</string>
+    <string name="geo_fix_clean">Circumvention is reliably hidden at the GeoIP level.</string>
+    <string name="geo_error_network">Network error</string>
+    <string name="geo_error_server">Could not retrieve server response with GeoIP.</string>
+    <string name="geo_error_prefix">Error: %1$s</string>
+    <string name="geo_error_connect">Failed to connect to API.</string>
+
+    <string name="direct_vpn_api_title">System VPN API</string>
+    <string name="direct_vpn_no_network">No active network</string>
+    <string name="direct_vpn_no_data">No data</string>
+    <string name="direct_vpn_desc">Checking system flag of VPN.</string>
+    <string name="direct_vpn_found">VPN DETECTED %1$s</string>
+    <string name="direct_vpn_found_desc">The system directly reports an active VPN tunnel.</string>
+    <string name="direct_vpn_fix">Use Proxy mode (bypassing VpnService) or VPN clients with root access (e.g. iptables) for transparent redirection without system flags.</string>
+    <string name="direct_vpn_clean">CLEAN</string>
+    <string name="direct_vpn_error">Error: %1$s</string>
+
+    <string name="proxy_settings_title">System Proxy settings</string>
+    <string name="proxy_settings_found">PROXY DETECTED (%1$s:%2$s)</string>
+    <string name="proxy_settings_desc">Detection of system proxy usage based on System.getProperty system properties.</string>
+    <string name="proxy_settings_fix">Disable system proxy settings in Android network settings for traffic to go directly.</string>
+    <string name="proxy_settings_clean">CLEAN</string>
+
+    <string name="not_vpn_title">NOT_VPN flag in Capabilities</string>
+    <string name="not_vpn_missing">MISSING (NOT_VPN flag is reset)</string>
+    <string name="not_vpn_no_network">No active network</string>
+    <string name="not_vpn_no_data">No connectivity capabilities</string>
+    <string name="not_vpn_desc">Indirect evidence. This flag is present in physical network connections and missing when VPN is active.</string>
+    <string name="not_vpn_fix">Use socket-level bypasses that do not register VPN in the system.</string>
+    <string name="not_vpn_clean">CLEAN</string>
+
+    <string name="interfaces_title">Network Interfaces</string>
+    <string name="interfaces_found">FOUND (%1$s)</string>
+    <string name="interfaces_desc">Indirect evidence. Presence of virtual interfaces (tun/tap/wg) may indicate a tunnel.</string>
+    <string name="interfaces_fix">Do not create a tun interface in client settings (use raw socks/http proxy), or rename the interface using root access.</string>
+    <string name="interfaces_clean">CLEAN</string>
+    <string name="interfaces_desc_clean">Indirect check of virtual tunnel adapters.</string>
+    <string name="interfaces_error">Failed to read interfaces.</string>
+
+    <string name="app_packages_title">Application Packages</string>
+    <string name="app_packages_found">FOUND (%1$s)</string>
+    <string name="app_packages_desc">Direct evidence. Popular installed VPN clients detected.</string>
+    <string name="app_packages_fix">Use custom builds/forks of clients or hide apps using Magisk modules / App Hider.</string>
+    <string name="app_packages_clean">CLEAN</string>
+    <string name="app_packages_desc_clean">Check for popular installed VPN clients.</string>
+
+    <string name="mtu_anomalies_title">MTU Anomalies</string>
+    <string name="mtu_low">LOW: %1$s</string>
+    <string name="mtu_desc">Indirect evidence. Lowered MTU is typical for tunneled traffic due to header encapsulation.</string>
+    <string name="mtu_fix">Adjust the MTU of the virtual interface to standard values (1420-1500) in advanced VPN client settings.</string>
+    <string name="mtu_clean">CLEAN</string>
+    <string name="mtu_desc_clean">Analysis of frame size (MTU) for indirect traces of VPN encapsulation.</string>
+    <string name="mtu_error">Error: %1$s</string>
+
+    <string name="local_proxy_title">Local Proxies</string>
+    <string name="local_proxy_open">PORTS OPEN (%1$s)</string>
+    <string name="local_proxy_desc">Indirect evidence. Open ports can indicate a local Proxy/Xray/Socks5 server is running.</string>
+    <string name="local_proxy_fix">Change the default incoming port (1080, 10808) to random dynamic ports (e.g. 49211) in the client configuration.</string>
+    <string name="local_proxy_clean">CLEAN</string>
+    <string name="local_proxy_desc_clean">Analysis of open local ports typical for proxy clients.</string>
+
+    <string name="fake_ip_title">Fake-IP Spoofing</string>
+    <string name="fake_ip_detected">DETECTED (%1$s)</string>
+    <string name="fake_ip_desc">Indirect evidence. The VPN core (e.g. Xray/sing-box) spoofs IPs to intercept traffic.</string>
+    <string name="fake_ip_fix">Disable Fake-IP function in DNS settings (switch to Real-IP, redir-host or remote DNS).</string>
+    <string name="fake_ip_clean">CLEAN</string>
+    <string name="fake_ip_desc_clean">Checking for fake internal IP addresses mapping to popular servers (Fake-IP tunneling).</string>
+
+    <string name="snitch_title">Network Latencies (SNITCH)</string>
+    <string name="snitch_timeout">Timeout (network unavailable)</string>
+    <string name="snitch_desc_rtt">Analysis of RTT to control landmarks.</string>
+    <string name="snitch_timeout_fix">Network unavailable or ports blocked.</string>
+    <string name="snitch_intercept">PROXY INTERCEPT (RU:%1$sms / EU:%2$sms)</string>
+    <string name="snitch_intercept_desc">Too low ping (&lt;= 2ms) is impossible in real networks and indicates TCP intercept by a local proxy.</string>
+    <string name="snitch_intercept_fix">Exclude verification hosts from TUN/Proxy intercept (use direct routing).</string>
+    <string name="snitch_anomaly">ANOMALY (RU:%1$sms / EU:%2$sms)</string>
+    <string name="snitch_anomaly_desc">Abnormally high latency to local (RU) node compared to foreign (EU) node indicates VPN usage.</string>
+    <string name="snitch_anomaly_fix">Disconnect VPN or add local hosts (ya.ru) to exclusions.</string>
+    <string name="snitch_clean">Within norm (RU:%1$sms / EU:%2$sms)</string>
+    <string name="snitch_desc_rtt_clean">Comparing ping (TCP RTT) for national and foreign nodes.</string>
+
+    <string name="ipv6_leak_title">IPv6 Leak</string>
+    <string name="ipv6_leak_detected">LEAK! IPv4 is encrypted (%1$s), but IPv6 goes directly (%2$s, Country: %3$s)</string>
+    <string name="ipv6_leak_safe">SAFE (IPv6: %1$s, Country: %2$s matches IPv4: %3$s)</string>
+    <string name="ipv6_leak_clean_active">CLEAN (IPv6 is active: %1$s, Country: %2$s)</string>
+    <string name="ipv6_leak_clean_unknown">CLEAN (IPv6: %1$s, but country not defined - leak unlikely)</string>
+    <string name="ipv6_leak_clean_no_addr">CLEAN (IPv6 connection did not return address)</string>
+    <string name="ipv6_leak_clean_host_unreachable">CLEAN (IPv6-only host is unreachable)</string>
+    <string name="ipv6_leak_clean_not_supported">CLEAN (IPv6 is not supported or blocked by tunnel)</string>
+    <string name="ipv6_leak_desc">Determining real IPv6 address leak. Common VPN vulnerability where IPv6 traffic goes around the tunnel.</string>
+    <string name="ipv6_leak_desc_clean">Analysis of real IPv6 address leak via unprotected routes.</string>
+    <string name="ipv6_leak_fix">Disable IPv6 in your mobile network settings or router settings. Some VPN clients also allow forced blocking of non-tunneled IPv6 traffic.</string>
+
+    <string name="share_report_title">🔍 VPN Inspector Scan Report\n\n</string>
+    <string name="share_final_status">Final Status: </string>
+    <string name="share_result_detected">🔴 BYPASS DETECTED\n</string>
+    <string name="share_result_needs_check">🟡 CHECK REQUIRED\n</string>
+    <string name="share_result_clean">🟢 SYSTEM IS CLEAN\n</string>
+    <string name="share_trust_score">Trust Score: %1$s%%\n\n</string>
+    <string name="share_results_header">Check Results:\n</string>
+
+    <!-- Methodology Viewer localization -->
+    <string name="methodology_title">Official Methodology</string>
+    <string name="methodology_close">Close</string>
+    <string name="methodology_card_desc">Methodology of detecting signs of bypass tools usage on client devices. Recognized text in Markdown format.</string>
+    <string name="methodology_source">Source: Union of IT Workers</string>
+    <string name="methodology_source_code">Source Code (GitHub)</string>
+    <string name="methodology_expand">Expand</string>
+    <string name="intro_section_name">Introduction</string>
+
+    <string name="settings_section_general">General Settings</string>
+    <string name="settings_language">Language / Язык</string>
+    <string name="settings_target_region">Target GeoIP Region</string>
+    <string name="onboarding_title">Welcome to VPN Inspector</string>
+    <string name="onboarding_desc">Please select your preferred app language and target GeoIP region to start. The target region is the country you expect to be geolocated in when no VPN is active.</string>
+    <string name="btn_save_and_continue">Save &amp; Continue</string>
+    <string name="custom_region_label">Custom country code (e.g. US, DE)</string>
+    <string name="custom_region_placeholder">ISO 2-letter code</string>
+    <string name="custom_region_error">Country code must be exactly 2 letters (e.g. US)</string>
+    <string name="support_star_title">Please support the project with a star! ⭐</string>
+    <string name="support_star_desc">If you like this application and find it useful, please support us by starring our repository on GitHub.</string>
 </resources>
