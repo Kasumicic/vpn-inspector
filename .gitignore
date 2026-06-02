@@ -18,3 +18,5 @@ local.properties
 debug.keystore
 release.jks
 .env.example
+.build-outputs/
+*.apk
