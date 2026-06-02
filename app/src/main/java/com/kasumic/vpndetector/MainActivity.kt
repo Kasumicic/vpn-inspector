@@ -189,7 +189,7 @@ fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Uni
         Spacer(modifier = Modifier.height(16.dp))
         Text("VPN Inspector", fontSize = 24.sp, color = colors.primaryText, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-        Text("Версия 1.4", textAlign = TextAlign.Center, color = colors.secondaryText)
+        Text("Версия 1.5", textAlign = TextAlign.Center, color = colors.secondaryText)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "Исходный код",
@@ -241,6 +241,7 @@ fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Uni
 
         Column(modifier = Modifier.fillMaxWidth()) {
             MethodologyBullet("• GeoIP", "Анализ на стороне сервера. Сравнение IP с репутационными базами.", colors)
+            MethodologyBullet("• Утечка IPv6 (IPv6 Leak)", "Сравнение геолокации IPv4 и IPv6 адресов для выявления трафика в обход VPN.", colors)
             MethodologyBullet("• Системный VPN API", "Опрос системного API Android на наличие TRANSPORT_VPN и VpnTransportInfo.", colors)
             MethodologyBullet("• Системные Proxy", "Выявление настроек прокси на основе системных свойств System.getProperty.", colors)
             MethodologyBullet("• Прямые признаки (Пакеты)", "Поиск установленных известных VPN/Proxy-клиентов и инструментов обхода.", colors)
