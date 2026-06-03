@@ -1,0 +1,15 @@
+VPN Inspector is an advanced diagnostic utility designed to audit your system network interfaces and routing for bypass tools. It helps you verify the resilience of your VPN, Proxy, or DNS-routing setup against standard inspection techniques.
+
+Features include:
+- GeoIP Regional Check: Compares your IP location details on the server side to detect anomalies.
+- IPv6 Leak audit: Highlights if IPv6 is bypassing the VPN tunnel directly.
+- System VPN API status: Queries Android's active VpnService flag.
+- System Proxy audit: Checks system-level HTTP/Socks proxy property leaks.
+- Package inspection: Scans for globally accessible or installed client-side bypass apps.
+- Interface & Routing audit: Identifies virtual network tunnels (tun, tap, wg, ppp).
+- MTU frame examination: Detects telltale signs of extra protocol headers indicating encapsulation.
+- Local proxy checks: Detects background services listening on standard local proxy ports.
+- DNS Fake-IP inspection: Evaluates potential DNS interception and spoofing attempts.
+- Network Latencies (SNITCH): Measures relative TCP RTT ping anomalies between national and international nodes.
+
+Perfect for privacy professionals, developers, and security enthusiasts seeking a complete diagnostic toolkit.

@@ -18,12 +18,15 @@ android {
   }
 
   signingConfigs {
-    create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/release.jks"
-      storeFile = file(keystorePath)
-      storePassword = System.getenv("STORE_PASSWORD") ?: project.findProperty("STORE_PASSWORD") as String? ?: ""
-      keyAlias = System.getenv("KEY_ALIAS") ?: "my-release-key"
-      keyPassword = System.getenv("KEY_PASSWORD") ?: project.findProperty("KEY_PASSWORD") as String? ?: ""
+    val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/release.jks"
+    val keystoreFile = file(keystorePath)
+    if (keystoreFile.exists()) {
+      create("release") {
+        storeFile = keystoreFile
+        storePassword = System.getenv("STORE_PASSWORD") ?: project.findProperty("STORE_PASSWORD") as String? ?: ""
+        keyAlias = System.getenv("KEY_ALIAS") ?: "my-release-key"
+        keyPassword = System.getenv("KEY_PASSWORD") ?: project.findProperty("KEY_PASSWORD") as String? ?: ""
+      }
     }
   }
   buildTypes {
@@ -31,10 +34,18 @@ android {
       isCrunchPngs = false
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      signingConfig = signingConfigs.getByName("release")
+      signingConfigs.findByName("release")?.let {
+        signingConfig = it
+      }
     }
     debug {
     }
+  }
+  dependenciesInfo {
+    // Disables dependency metadata when building APKs (for IzzyOnDroid/F-Droid)
+    includeInApk = false
+    // Disables dependency metadata when building Android App Bundles (for Google Play)
+    includeInBundle = false
   }
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_11
