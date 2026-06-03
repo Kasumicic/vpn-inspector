@@ -1,5 +1,4 @@
 *.iml
-.gradle
 .kotlin
 /local.properties
 /.idea/caches
@@ -19,3 +18,7 @@ debug.keystore
 release.jks
 .env.example
 .build-outputs/
+build/
+app/build/
+.gradle/
+*.apk
