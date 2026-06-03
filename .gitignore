@@ -18,6 +18,7 @@ debug.keystore
 release.jks
 .env.example
 .build-outputs/
+unzip-project.js
 build/
 app/build/
 .gradle/
