@@ -50,18 +50,19 @@
     <string name="unknown_val">Unknown</string>
     <string name="checking_val">Checking…</string>
 
-    <string name="scan_step_0">Configuring scan (0/11)</string>
-    <string name="scan_step_1">IP &amp; GeoIP Analysis (1/11)…</string>
-    <string name="scan_step_2">Checking for IPv6 leakage (2/11)…</string>
-    <string name="scan_step_3">Checking system VPN (3/11)…</string>
-    <string name="scan_step_4">Checking system Proxies (4/11)…</string>
-    <string name="scan_step_5">Checking packages (5/11)…</string>
-    <string name="scan_step_6">Checking NOT_VPN flag (6/11)…</string>
-    <string name="scan_step_7">Checking interfaces (7/11)…</string>
-    <string name="scan_step_8">Checking MTU (8/11)…</string>
-    <string name="scan_step_9">Checking local proxy (9/11)…</string>
-    <string name="scan_step_10">Checking Fake-IP (10/11)…</string>
-    <string name="scan_step_11">Analyzing network latency (11/11)…</string>
+    <string name="scan_step_0">Configuring scan (0/12)</string>
+    <string name="scan_step_1">IP &amp; GeoIP Analysis (1/12)…</string>
+    <string name="scan_step_2">Checking for IPv6 leakage (2/12)…</string>
+    <string name="scan_step_3">Checking system VPN (3/12)…</string>
+    <string name="scan_step_4">Checking system Proxies (4/12)…</string>
+    <string name="scan_step_5">Checking packages (5/12)…</string>
+    <string name="scan_step_6">Checking NOT_VPN flag (6/12)…</string>
+    <string name="scan_step_7">Checking interfaces (7/12)…</string>
+    <string name="scan_step_8">Checking MTU (8/12)…</string>
+    <string name="scan_step_9">Checking local proxy (9/12)…</string>
+    <string name="scan_step_10">Checking Fake-IP (10/12)…</string>
+    <string name="scan_step_11">Checking DNS servers (11/12)…</string>
+    <string name="scan_step_12">Analyzing network latency (12/12)…</string>
 
     <!-- Scan Results localization -->
     <string name="geo_analysis_title">IP Analysis (GeoIP)</string>
@@ -135,6 +136,17 @@
     <string name="fake_ip_fix">Disable Fake-IP function in DNS settings (switch to Real-IP, redir-host or remote DNS).</string>
     <string name="fake_ip_clean">CLEAN</string>
     <string name="fake_ip_desc_clean">Checking for fake internal IP addresses mapping to popular servers (Fake-IP tunneling).</string>
+
+    <string name="dns_check_title">DNS Server Check</string>
+    <string name="dns_no_network">No active network</string>
+    <string name="dns_no_data">No data</string>
+    <string name="dns_no_servers">No DNS servers detected</string>
+    <string name="dns_found_servers">DNS: %1$s</string>
+    <string name="dns_custom_detected">NON-PROVIDER DNS IP: %1$s (Detected non-provider/public DNS: %2$s)</string>
+    <string name="dns_clean">CLEAN (Provider DNS servers: %1$s)</string>
+    <string name="dns_desc">Indirect evidence. Usage of public/custom DNS servers (like Google, Cloudflare, etc.) or VPN DNS ranges suggests DNS routing detour.</string>
+    <string name="dns_desc_clean">Checking for custom, public (Google, Cloudflare, Quad9, etc.) or VPN-assigned DNS servers.</string>
+    <string name="dns_fix">Switch back to default ISP-assigned DNS servers via DHCP or mobile carrier network settings.</string>
 
     <string name="snitch_title">Network Latencies (SNITCH)</string>
     <string name="snitch_timeout">Timeout (network unavailable)</string>

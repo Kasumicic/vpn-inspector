@@ -110,6 +110,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
 
             _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_11))
+            scanResults.add(localScanner.checkDnsServers())
+            _uiState.value = _uiState.value.copy(results = scanResults.toList())
+
+            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_12))
             scanResults.add(localScanner.analyzeLatency())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
             

@@ -50,18 +50,19 @@
     <string name="unknown_val">Неизвестно</string>
     <string name="checking_val">Проверка…</string>
 
-    <string name="scan_step_0">Настройка сканирования (0/11)</string>
-    <string name="scan_step_1">Анализ IP и GeoIP (1/11)…</string>
-    <string name="scan_step_2">Проверка утечки IPv6 (2/11)…</string>
-    <string name="scan_step_3">Проверка системного VPN (3/11)…</string>
-    <string name="scan_step_4">Проверка системных Proxy (4/11)…</string>
-    <string name="scan_step_5">Проверка пакетов (5/11)…</string>
-    <string name="scan_step_6">Проверка флага NOT_VPN (6/11)…</string>
-    <string name="scan_step_7">Проверка интерфейсов (7/11)…</string>
-    <string name="scan_step_8">Проверка MTU (8/11)…</string>
-    <string name="scan_step_9">Проверка локального прокси (9/11)…</string>
-    <string name="scan_step_10">Проверка Fake-IP (10/11)…</string>
-    <string name="scan_step_11">Анализ сетевой задержки (11/11)…</string>
+    <string name="scan_step_0">Настройка сканирования (0/12)</string>
+    <string name="scan_step_1">Анализ IP и GeoIP (1/12)…</string>
+    <string name="scan_step_2">Проверка утечки IPv6 (2/12)…</string>
+    <string name="scan_step_3">Проверка системного VPN (3/12)…</string>
+    <string name="scan_step_4">Проверка системных Proxy (4/12)…</string>
+    <string name="scan_step_5">Проверка пакетов (5/12)…</string>
+    <string name="scan_step_6">Проверка флага NOT_VPN (6/12)…</string>
+    <string name="scan_step_7">Проверка интерфейсов (7/12)…</string>
+    <string name="scan_step_8">Проверка MTU (8/12)…</string>
+    <string name="scan_step_9">Проверка локального прокси (9/12)…</string>
+    <string name="scan_step_10">Проверка Fake-IP (10/12)…</string>
+    <string name="scan_step_11">Проверка DNS серверов (11/12)…</string>
+    <string name="scan_step_12">Анализ сетевой задержки (12/12)…</string>
 
     <!-- Scan Results localization -->
     <string name="geo_analysis_title">Анализ IP (GeoIP)</string>
@@ -135,6 +136,17 @@
     <string name="fake_ip_fix">Отключите функцию Fake-IP в конфигурации DNS (переключитесь на Real-IP, redir-host или remote DNS).</string>
     <string name="fake_ip_clean">ЧИСТО</string>
     <string name="fake_ip_desc_clean">Проверка на выдачу фейковых внутренних IP-адресов популярным серверам (Fake-IP туннелирование).</string>
+
+    <string name="dns_check_title">Проверка DNS серверов</string>
+    <string name="dns_no_network">Нет активной сети</string>
+    <string name="dns_no_data">Нет данных</string>
+    <string name="dns_no_servers">DNS-серверы не обнаружены</string>
+    <string name="dns_found_servers">DNS: %1$s</string>
+    <string name="dns_custom_detected">НЕПРОВАЙДЕРСКИЙ DNS: %1$s (Выявлен публичный/кастомный DNS: %2$s)</string>
+    <string name="dns_clean">ЧИСТО (Используются DNS провайдера: %1$s)</string>
+    <string name="dns_desc">Косвенный признак. Использование публичных DNS (Google, Cloudflare, Яндекс и др.) или DNS внутри VPN-сетей указывает на перенаправление DNS запросов.</string>
+    <string name="dns_desc_clean">Проверка на предмет использования сторонних, публичных или выданных VPN-сервисом DNS-серверов.</string>
+    <string name="dns_fix">Очистите настройки Private DNS или верните получение DNS адресов в автоматический режим (по DHCP от провайдера) в системных настройках сети.</string>
 
     <string name="snitch_title">Сетевые задержки (SNITCH)</string>
     <string name="snitch_timeout">Таймаут (сеть недоступна)</string>
