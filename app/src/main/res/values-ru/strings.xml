@@ -69,7 +69,7 @@
     <string name="geo_detail_suspicious">Подозрительный IP:\nСтрана: %1$s</string>
     <string name="geo_detail_clean">Чистый IP (Ожидаемый регион: %1$s)</string>
     <string name="geo_desc">Метод определяет регион IP на стороне сервера (GeoIP).</string>
-    <string name="geo_fix_suspicious">Используйте резидентные прокси или настройте маршрутизацию (Split Tunneling) на российские IP адреса.</string>
+    <string name="geo_fix_suspicious">Настройте раздельное туннелирование (Split Tunneling) в параметрах вашего VPN-клиента (например, Amnezia VPN, v2rayNG, OpenVPN, WireGuard) и добавьте данное приложение в список исключений (Bypass/Excluded Apps). Это позволит направлять трафик приложения напрямую в физический WAN-интерфейс в обход виртуального VPN-соединения, возвращая корректный целевой IP-адрес.</string>
     <string name="geo_fix_clean">Обход надежно скрыт на уровне GeoIP.</string>
     <string name="geo_error_network">Ошибка сети</string>
     <string name="geo_error_server">Не удалось получить серверный ответ с GeoIP.</string>
@@ -82,14 +82,14 @@
     <string name="direct_vpn_desc">Проверка системного флага VPN.</string>
     <string name="direct_vpn_found">ОБНАРУЖЕН VPN %1$s</string>
     <string name="direct_vpn_found_desc">Система напрямую сообщает о наличии активного VPN-туннеля.</string>
-    <string name="direct_vpn_fix">Используйте Proxy-режим (в обход VpnService) или VPN-клиенты с root-правами (например, iptables) для прозрачного перенаправления без системного флага.</string>
+    <string name="direct_vpn_fix">Используйте туннелирование на уровне пользовательского пространства (User-space SOCKS5/HTTP Proxy, например, в режиме proxy-in-app Client в Daedalus/SagerNet) или воспользуйтесь transparent-проксированием через iptables/nftables на рутованном устройстве, исключающим вызов API VpnService и появление виртуальной сетевой карты.</string>
     <string name="direct_vpn_clean">ЧИСТО</string>
     <string name="direct_vpn_error">Ошибка: %1$s</string>
 
     <string name="proxy_settings_title">Системные Proxy-настройки</string>
     <string name="proxy_settings_found">ОБНАРУЖЕН PROXY (%1$s:%2$s)</string>
     <string name="proxy_settings_desc">Выявление использования системного Proxy на основе системных свойств System.getProperty.</string>
-    <string name="proxy_settings_fix">Отключите системный прокси-сервер в настройках сети Android, чтобы трафик шел напрямую.</string>
+    <string name="proxy_settings_fix">Сбросьте глобальные настройки JVM-прокси и APN-прокси в системных параметрах точки доступа (APN), либо очистите системные свойства http.proxyHost и socksProxyHost через ADB/root команды settings delete global http_proxy.</string>
     <string name="proxy_settings_clean">ЧИСТО</string>
 
     <string name="not_vpn_title">Флаг NOT_VPN в Capabilities</string>
@@ -97,13 +97,13 @@
     <string name="not_vpn_no_network">Нет активной сети</string>
     <string name="not_vpn_no_data">Нет данных о возможностях сети</string>
     <string name="not_vpn_desc">Косвенный признак. Для обычных сетей этот флаг присутствует, при активном VPN отсутствует.</string>
-    <string name="not_vpn_fix">Используйте обходные пути на уровне сокетов, не регистрирующие VPN в системе.</string>
+    <string name="not_vpn_fix">Переведите прокси-клиент в чистый TCP/UDP сокет-режим (например, SOCKS5 посредством библиотек разделяемых сокетов в обход ОС) или примените обфускацию трафика (ByeDPI/TPWS), которая работает на уровне сокетов приложения без переопределения системных Capabilities.</string>
     <string name="not_vpn_clean">ЧИСТО</string>
 
     <string name="interfaces_title">Сетевые интерфейсы</string>
     <string name="interfaces_found">НАЙДЕНЫ (%1$s)</string>
     <string name="interfaces_desc">Косвенный признак. Наличие виртуальных интерфейсов (tun/tap/wg) может указывать на туннель.</string>
-    <string name="interfaces_fix">Отмените создание tun-интерфейса в настройках клиента (используйте чистый socks/http proxy), либо переименуйте интерфейс через root-доступ.</string>
+    <string name="interfaces_fix">Направьте трафик через SOCKS5/HTTP прокси со встроенной трансляцией (например, gost/tun2socks в режиме прокси-сервера без поднятия tun-интерфейса), либо переименуйте виртуальный интерфейс в ядре (через утилиты ip link set dev tun0 name eth1) при наличии root-прав.</string>
     <string name="interfaces_clean">ЧИСТО</string>
     <string name="interfaces_desc_clean">Косвенная проверка на наличие виртуальных адаптеров туннелирования.</string>
     <string name="interfaces_error">Ошибка чтения интерфейсов.</string>
@@ -111,14 +111,14 @@
     <string name="app_packages_title">Пакеты приложений</string>
     <string name="app_packages_found">НАЙДЕНЫ (%1$s)</string>
     <string name="app_packages_desc">Прямой признак. Обнаружены установленные популярные VPN-клиенты.</string>
-    <string name="app_packages_fix">Используйте кастомные сборки/форки клиентов или скрывайте приложения через модули Magisk / App Hider.</string>
+    <string name="app_packages_fix">Используйте кастомно скомпилированные VPN-клиенты с измененными package_name (уникальные идентификаторы), поместите приложения во встроенное защищенное пространство (Samsung Knox, Private Space на Android 15), или задействуйте Magisk/KernelSU с модулем Shamiko (HMA - Hide My Applist) для сокрытия пакетов от PackageManager.</string>
     <string name="app_packages_clean">ЧИСТО</string>
     <string name="app_packages_desc_clean">Проверка на наличие популярных установленных VPN-клиентов.</string>
 
     <string name="mtu_anomalies_title">Аномалии MTU</string>
     <string name="mtu_low">ПОНИЖЕН: %1$s</string>
     <string name="mtu_desc">Косвенный признак. Пониженный MTU характерен для туннелированного трафика из-за инкапсуляции заголовков.</string>
-    <string name="mtu_fix">Отрегулируйте MTU виртуального интерфейса до стандартных значений (1420-1500) в расширенных настройках VPN-клиента.</string>
+    <string name="mtu_fix">Установите стандартное значение MTU (1500 для Wi-Fi/Ethernet или 1410-1430 для мобильных сетей) в файле конфигурации туннеля (параметр MTU = 1500 в WireGuard профиле), либо настройте замену MTU на стороне бэкенда для сокрытия аномалий инкапсуляции.</string>
     <string name="mtu_clean">ЧИСТО</string>
     <string name="mtu_desc_clean">Анализ размера кадра (MTU) на косвенные следы инкапсуляции VPN.</string>
     <string name="mtu_error">Ошибка: %1$s</string>
@@ -126,14 +126,14 @@
     <string name="local_proxy_title">Локальные Прокси</string>
     <string name="local_proxy_open">ОТКРЫТЫ ПОРТЫ (%1$s)</string>
     <string name="local_proxy_desc">Косвенный вызов. Открытые порты могут указывать на работу локального Proxy/Xray/Socks5 сервера.</string>
-    <string name="local_proxy_fix">Смените стандартные порты входящего подключения (1080, 10808) на случайные динамические порты (например, 49211) в конфигурации клиента.</string>
+    <string name="local_proxy_fix">Измените дефолтные порты входящих сокетов (1080, 10808, 9050) в JSON-конфигурации клиента (Xray/SagerNet/v2ray) на случайные высокие порты из диапазона Ephemeral Ports (например, 49152–65535) и ограничьте прослушивание только хостом localhost (127.0.0.1).</string>
     <string name="local_proxy_clean">ЧИСТО</string>
     <string name="local_proxy_desc_clean">Анализ открытых локальных портов, характерных для proxy-клиентов.</string>
 
     <string name="fake_ip_title">Подмена Fake-IP</string>
     <string name="fake_ip_detected">ОБНАРУЖЕНО (%1$s)</string>
     <string name="fake_ip_desc">Косвенный признак. VPN-ядро (например, Xray/sing-box) подменяет IP для перехвата трафика.</string>
-    <string name="fake_ip_fix">Отключите функцию Fake-IP в конфигурации DNS (переключитесь на Real-IP, redir-host или remote DNS).</string>
+    <string name="fake_ip_fix">Измените режим DNS туннелирования в профиле клиента: выключите режим Fake-IP (например, в Clash/sing-box) и включите режим Real-IP, настроив Direct-DNS маршрутизацию или перенаправление на локальный рекурсивный DNS-сервер.</string>
     <string name="fake_ip_clean">ЧИСТО</string>
     <string name="fake_ip_desc_clean">Проверка на выдачу фейковых внутренних IP-адресов популярным серверам (Fake-IP туннелирование).</string>
 
@@ -146,7 +146,7 @@
     <string name="dns_clean">ЧИСТО (Используются DNS провайдера: %1$s)</string>
     <string name="dns_desc">Косвенный признак. Использование публичных DNS (Google, Cloudflare, Яндекс и др.) или DNS внутри VPN-сетей указывает на перенаправление DNS запросов.</string>
     <string name="dns_desc_clean">Проверка на предмет использования сторонних, публичных или выданных VPN-сервисом DNS-серверов.</string>
-    <string name="dns_fix">Очистите настройки Private DNS или верните получение DNS адресов в автоматический режим (по DHCP от провайдера) в системных настройках сети.</string>
+    <string name="dns_fix">Выключите сторонние DNS-серверы и функцию \'Частный DNS\' (Private DNS) в настройках Android, верните получение адресов от провайдера (через DHCP/SLAAC), а для обхода ограничений используйте обфускацию DNS-запросов (Encrypted DNS - DoH/DoT) непосредственно внутри туннеля, без изменения системных серверов.</string>
 
     <string name="snitch_title">Сетевые задержки (SNITCH)</string>
     <string name="snitch_timeout">Таймаут (сеть недоступна)</string>
@@ -154,10 +154,10 @@
     <string name="snitch_timeout_fix">Сеть недоступна, либо порты заблокированы.</string>
     <string name="snitch_intercept">ПЕРЕХВАТ ПРОКСИ (RU:%1$sмс / EU:%2$sмс)</string>
     <string name="snitch_intercept_desc">Слишком низкий пинг (&lt;= 2мс) невозможен в реальной сети и указывает на перехват TCP локальным прокси-сервером.</string>
-    <string name="snitch_intercept_fix">Исключите трафик проверочных серверов из TUN/Proxy перехвата (используйте прямую маршрутизацию).</string>
+    <string name="snitch_intercept_fix">Добавьте тестовые хосты (ya.ru, google.com) в список исключений маршрутизации прокси-клиента (bypass-правила), чтобы пакеты обходили фазу перехвата локальной прокси-заглушкой и шли по нативному сетевому пути.</string>
     <string name="snitch_anomaly">АНОМАЛИЯ (RU:%1$sмс / EU:%2$sмс)</string>
     <string name="snitch_anomaly_desc">Аномально высокая задержка до локального (RU) узла по сравнению с зарубежным (EU) узлом свидетельствует об использовании VPN.</string>
-    <string name="snitch_anomaly_fix">Отключите VPN или добавьте локальные хосты (ya.ru) в исключения.</string>
+    <string name="snitch_anomaly_fix">Настройте низколатентные шлюзы (ближайшие к вашей физической локации VPN-серверы), используйте высокопроизводительные протоколы без избыточных оберток (WireGuard/AmneziaWG вместо OpenVPN-over-TCP), либо пропишите прямое (Direct) прохождение трафика для измеряемых ресурсов.</string>
     <string name="snitch_clean">В пределах нормы (RU:%1$sмс / EU:%2$sмс)</string>
     <string name="snitch_desc_rtt_clean">Сравнение пинга (TCP RTT) для национальных и зарубежных узлов.</string>
 
@@ -171,7 +171,7 @@
     <string name="ipv6_leak_clean_not_supported">ЧИСТО (IPv6 не поддерживается или заблокирован туннелем)</string>
     <string name="ipv6_leak_desc">Определение утечки реального IPv6-адреса. Распространенная уязвимость VPN, когда IPv6 трафик идет мимо туннеля.</string>
     <string name="ipv6_leak_desc_clean">Анализ утечки реального IPv6-адреса через незащищенные маршруты.</string>
-    <string name="ipv6_leak_fix">Отключите IPv6 в настройках мобильной сети вашего устройства или в настройках роутера. Некоторые VPN клиенты также позволяют принудительно блокировать нетуннелируемый IPv6 трафик.</string>
+    <string name="ipv6_leak_fix">Активируйте в настройках VPN-клиента блокировку нетуннелируемого IPv6-трафика (опция \'Block Non-VPN Traffic\' или принудительный редирект ::/0), полностью отключите IPv6 в APN-профиле мобильного оператора на устройстве, либо деактивируйте IPv6 на уровне роутера (SLAAC/DHCPv6).</string>
 
     <string name="share_report_title">🔍 VPN Inspector Scan Report\n\n</string>
     <string name="share_final_status">Итоговый статус: </string>

@@ -117,21 +117,66 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             scanResults.add(localScanner.analyzeLatency())
             _uiState.value = _uiState.value.copy(results = scanResults.toList())
             
-            // Calculate final verdict based on methodology table
+            // Calculate dynamic trust score based on individual check weights
+            var penaltySum = 0
+            val localContext = getLocalizedContext()
+            
+            scanResults.forEach { result ->
+                if (result.isRisky && !result.isError) {
+                    when (result.category) {
+                        ScanCategory.GEO -> {
+                            penaltySum += 45 // GeoIP mismatch is highly suspicious
+                        }
+                        ScanCategory.DIRECT -> {
+                            if (result.moduleName == localContext.getString(R.string.app_packages_title)) {
+                                penaltySum += 10 // Installed clients package scanner
+                            } else {
+                                penaltySum += 30 // Direct VPN transports or HTTP/SOCKS system proxy
+                            }
+                        }
+                        ScanCategory.INDIRECT -> {
+                            when (result.moduleName) {
+                                localContext.getString(R.string.interfaces_title) -> penaltySum += 20 // active virtual ifaces (tun/tap/wg)
+                                localContext.getString(R.string.not_vpn_title) -> penaltySum += 25 // missing NOT_VPN interface capability
+                                localContext.getString(R.string.fake_ip_title) -> penaltySum += 25 // Fake-IP internal addresses (DNS Spoof)
+                                localContext.getString(R.string.snitch_title) -> penaltySum += 25 // Snitch interception latency anomalies
+                                localContext.getString(R.string.local_proxy_title) -> penaltySum += 15 // Active local proxy ports (1080, 10808)
+                                localContext.getString(R.string.mtu_anomalies_title) -> penaltySum += 10 // Reduced MTU packet size
+                                localContext.getString(R.string.dns_check_title) -> penaltySum += 15 // Off-provider public/private DNS
+                                localContext.getString(R.string.ipv6_leak_title) -> penaltySum += 15 // IPv6 leakage / split routing mismatch
+                                else -> penaltySum += 15
+                            }
+                        }
+                    }
+                }
+            }
+
             val hasGeoRisk = scanResults.any { it.category == ScanCategory.GEO && it.isRisky }
             val hasDirectRisk = scanResults.any { it.category == ScanCategory.DIRECT && it.isRisky }
             val hasIndirectRisk = scanResults.any { it.category == ScanCategory.INDIRECT && it.isRisky }
 
-            val (decision, score) = when {
-                !hasGeoRisk && !hasDirectRisk && !hasIndirectRisk -> DecisionState.CLEAN to 100
-                !hasGeoRisk && hasDirectRisk && !hasIndirectRisk -> DecisionState.CLEAN to 80
-                !hasGeoRisk && !hasDirectRisk && hasIndirectRisk -> DecisionState.CLEAN to 90
-                hasGeoRisk && !hasDirectRisk && !hasIndirectRisk -> DecisionState.NEEDS_CHECK to 50
-                !hasGeoRisk && hasDirectRisk && hasIndirectRisk -> DecisionState.NEEDS_CHECK to 40
-                hasGeoRisk && hasDirectRisk && !hasIndirectRisk -> DecisionState.DETECTED to 10
-                hasGeoRisk && !hasDirectRisk && hasIndirectRisk -> DecisionState.DETECTED to 10
-                hasGeoRisk && hasDirectRisk && hasIndirectRisk -> DecisionState.DETECTED to 0
-                else -> DecisionState.CLEAN to 100
+            val decision = when {
+                !hasGeoRisk && !hasDirectRisk && !hasIndirectRisk -> DecisionState.CLEAN // Row 1
+                !hasGeoRisk && hasDirectRisk && !hasIndirectRisk -> DecisionState.CLEAN  // Row 2
+                !hasGeoRisk && !hasDirectRisk && hasIndirectRisk -> DecisionState.CLEAN  // Row 3
+                hasGeoRisk && !hasDirectRisk && !hasIndirectRisk -> DecisionState.NEEDS_CHECK // Row 4
+                !hasGeoRisk && hasDirectRisk && hasIndirectRisk -> DecisionState.NEEDS_CHECK  // Row 5
+                hasGeoRisk && hasDirectRisk && !hasIndirectRisk -> DecisionState.DETECTED     // Row 6
+                hasGeoRisk && !hasDirectRisk && hasIndirectRisk -> DecisionState.DETECTED     // Row 7
+                hasGeoRisk && hasDirectRisk && hasIndirectRisk -> DecisionState.DETECTED      // Row 8
+                else -> DecisionState.CLEAN
+            }
+
+            val score = when (decision) {
+                DecisionState.CLEAN -> {
+                    (100 - penaltySum).coerceIn(80, 100)
+                }
+                DecisionState.NEEDS_CHECK -> {
+                    (100 - penaltySum).coerceIn(35, 75)
+                }
+                DecisionState.DETECTED -> {
+                    (100 - penaltySum).coerceIn(0, 30)
+                }
             }
             
             _uiState.value = _uiState.value.copy(
