@@ -67,55 +67,122 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             val scanResults = mutableListOf<ScanResult>()
-            
-            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_1))
+            val sharedPrefs = getApplication<Application>().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+
+            val isGeoEnabled = sharedPrefs.getBoolean("check_geo", true)
+            val isIpv6LeakEnabled = sharedPrefs.getBoolean("check_ipv6_leak", true)
+            val isDirectApiEnabled = sharedPrefs.getBoolean("check_direct_api", true)
+            val isProxySettingsEnabled = sharedPrefs.getBoolean("check_system_proxy", true)
+            val isVpnAppsEnabled = sharedPrefs.getBoolean("check_vpn_apps", true)
+            val isNotVpnEnabled = sharedPrefs.getBoolean("check_not_vpn_capability", true)
+            val isInterfacesEnabled = sharedPrefs.getBoolean("check_interfaces", true)
+            val isMtuEnabled = sharedPrefs.getBoolean("check_mtu_anomalies", true)
+            val isLocalProxiesEnabled = sharedPrefs.getBoolean("check_local_proxies", true)
+            val isFakeIpEnabled = sharedPrefs.getBoolean("check_fake_ip", true)
+            val isDnsEnabled = sharedPrefs.getBoolean("check_dns_servers", true)
+            val isLatencyEnabled = sharedPrefs.getBoolean("check_latency", true)
+
+            val totalActiveSteps = listOf(
+                isGeoEnabled, isIpv6LeakEnabled, isDirectApiEnabled, isProxySettingsEnabled,
+                isVpnAppsEnabled, isNotVpnEnabled, isInterfacesEnabled, isMtuEnabled,
+                isLocalProxiesEnabled, isFakeIpEnabled, isDnsEnabled, isLatencyEnabled
+            ).count { it }
+
+            var currentStepIndex = 0
+
+            fun getStatusText(stringResId: Int, index: Int): String {
+                val rawString = localContext.getString(stringResId)
+                return rawString.replace(Regex("\\(\\d+/\\d+\\)"), "($index/$totalActiveSteps)")
+            }
+
+            _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_0, 0))
+
+            if (isGeoEnabled) {
+                currentStepIndex++
+                _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_1, currentStepIndex))
+            }
             val (ip, ipResults) = localScanner.getIpInfo()
-            scanResults.addAll(ipResults)
+            if (isGeoEnabled) {
+                scanResults.addAll(ipResults)
+            }
             _uiState.value = _uiState.value.copy(ipAddress = ip, results = scanResults.toList())
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_2))
-            scanResults.add(localScanner.checkIpv6Leak())
-            _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            if (isIpv6LeakEnabled) {
+                currentStepIndex++
+                _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_2, currentStepIndex))
+                scanResults.add(localScanner.checkIpv6Leak())
+                _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            }
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_3))
-            scanResults.add(localScanner.checkDirectApi())
-            _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            if (isDirectApiEnabled) {
+                currentStepIndex++
+                _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_3, currentStepIndex))
+                scanResults.add(localScanner.checkDirectApi())
+                _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            }
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_4))
-            scanResults.add(localScanner.checkSystemProxySettings())
-            _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            if (isProxySettingsEnabled) {
+                currentStepIndex++
+                _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_4, currentStepIndex))
+                scanResults.add(localScanner.checkSystemProxySettings())
+                _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            }
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_5))
-            scanResults.add(localScanner.checkVpnApps())
-            _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            if (isVpnAppsEnabled) {
+                currentStepIndex++
+                _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_5, currentStepIndex))
+                scanResults.add(localScanner.checkVpnApps())
+                _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            }
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_6))
-            scanResults.add(localScanner.checkNotVpnCapability())
-            _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            if (isNotVpnEnabled) {
+                currentStepIndex++
+                _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_6, currentStepIndex))
+                scanResults.add(localScanner.checkNotVpnCapability())
+                _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            }
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_7))
-            scanResults.add(localScanner.checkInterfaces())
-            _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            if (isInterfacesEnabled) {
+                currentStepIndex++
+                _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_7, currentStepIndex))
+                scanResults.add(localScanner.checkInterfaces())
+                _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            }
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_8))
-            scanResults.add(localScanner.checkMtuAnomalies())
-            _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            if (isMtuEnabled) {
+                currentStepIndex++
+                _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_8, currentStepIndex))
+                scanResults.add(localScanner.checkMtuAnomalies())
+                _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            }
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_9))
-            scanResults.add(localScanner.checkLocalProxies())
-            _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            if (isLocalProxiesEnabled) {
+                currentStepIndex++
+                _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_9, currentStepIndex))
+                scanResults.add(localScanner.checkLocalProxies())
+                _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            }
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_10))
-            scanResults.add(localScanner.checkFakeIp())
-            _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            if (isFakeIpEnabled) {
+                currentStepIndex++
+                _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_10, currentStepIndex))
+                scanResults.add(localScanner.checkFakeIp())
+                _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            }
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_11))
-            scanResults.add(localScanner.checkDnsServers())
-            _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            if (isDnsEnabled) {
+                currentStepIndex++
+                _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_11, currentStepIndex))
+                scanResults.add(localScanner.checkDnsServers())
+                _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            }
 
-            _uiState.value = _uiState.value.copy(currentScanStatus = localContext.getString(R.string.scan_step_12))
-            scanResults.add(localScanner.analyzeLatency())
-            _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            if (isLatencyEnabled) {
+                currentStepIndex++
+                _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_12, currentStepIndex))
+                scanResults.add(localScanner.analyzeLatency())
+                _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            }
             
             // Calculate dynamic trust score based on individual check weights
             var penaltySum = 0

@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">VPN Inspector</string>
     <string name="tab_scan">Проверка</string>
-    <string name="tab_settings">Настройки и Инфо</string>
+    <string name="tab_settings">Настройки</string>
+    <string name="tab_info">Инфо</string>
     <string name="version_title">Версия 1.5</string>
     <string name="source_code">Исходный код</string>
     <string name="dark_theme">Тёмная тема</string>
@@ -201,4 +202,21 @@
     <string name="custom_region_error">Код страны должен состоять ровно из 2 букв (например, RU)</string>
     <string name="support_star_title">Поддержите проект звездой! ⭐</string>
     <string name="support_star_desc">Если вам нравится наше приложение и вы находите его полезным, пожалуйста, поддержите нас, поставив звезду нашему репозиторию на GitHub.</string>
+    
+    <!-- Keep Android Open Campaign Strings -->
+    <string name="keep_android_open_title">Спасите Android!</string>
+    <string name="keep_android_open_headline">Свобода Android под угрозой</string>
+    <string name="keep_android_open_desc">Начиная с сентября 2026 года, тихое обновление от Google будет блокировать каждое Android-приложение, разработчик которого не зарегистрировался в Google, не подписал их контракт, не заплатил, не идентифицировал себя через государственное удостоверение личности.</string>
+    <string name="keep_android_open_days_remaining">дней до закрытия</string>
+    <string name="keep_android_open_visit_website">Перейти на keepandroidopen.org</string>
+    <string name="keep_android_open_dismiss_confirm_title">Скрыть баннер?</string>
+    <string name="keep_android_open_dismiss_confirm_desc">Вы можете скрыть этот баннер. Подробная информация всегда доступна на сайте движения.</string>
+    <string name="keep_android_open_dismiss_confirm_yes">Да, скрыть</string>
+    <string name="keep_android_open_dismiss_confirm_no">Отмена</string>
+    
+    <!-- Settings Checks Toggles -->
+    <string name="settings_section_checks">Настройка проверок</string>
+    <string name="settings_section_checks_desc">Настройте, какие тесты активны при сканировании (для опытных пользователей).</string>
+    <string name="settings_back">Назад</string>
+    <string name="settings_reset_checks">Сбросить настройки</string>
 </resources>

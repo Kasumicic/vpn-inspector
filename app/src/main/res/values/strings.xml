@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">VPN Inspector</string>
     <string name="tab_scan">Scan</string>
-    <string name="tab_settings">Settings &amp; Info</string>
+    <string name="tab_settings">Settings</string>
+    <string name="tab_info">Info</string>
     <string name="version_title">Version 1.5</string>
     <string name="source_code">Source Code</string>
     <string name="dark_theme">Dark Theme</string>
@@ -201,4 +202,21 @@
     <string name="custom_region_error">Country code must be exactly 2 letters (e.g. US)</string>
     <string name="support_star_title">Please support the project with a star! ⭐</string>
     <string name="support_star_desc">If you like this application and find it useful, please support us by starring our repository on GitHub.</string>
+    
+    <!-- Keep Android Open Campaign Strings -->
+    <string name="keep_android_open_title">Save Android!</string>
+    <string name="keep_android_open_headline">Android Freedom is Under Threat</string>
+    <string name="keep_android_open_desc">Starting September 2026, a silent update from Google will block every Android app whose developer hasn\'t registered with Google, signed their contract, paid a fee, and identified themselves using a government ID.</string>
+    <string name="keep_android_open_days_remaining">days until lockdown</string>
+    <string name="keep_android_open_visit_website">Visit keepandroidopen.org</string>
+    <string name="keep_android_open_dismiss_confirm_title">Dismiss Banner?</string>
+    <string name="keep_android_open_dismiss_confirm_desc">You can hide this banner. Detailed information is always available on the campaign website.</string>
+    <string name="keep_android_open_dismiss_confirm_yes">Yes, dismiss</string>
+    <string name="keep_android_open_dismiss_confirm_no">Cancel</string>
+    
+    <!-- Settings Checks Toggles -->
+    <string name="settings_section_checks">Diagnostic Checks</string>
+    <string name="settings_section_checks_desc">Configure which tests run during scanning (for experienced users).</string>
+    <string name="settings_back">Back</string>
+    <string name="settings_reset_checks">Reset to Default</string>
 </resources>
