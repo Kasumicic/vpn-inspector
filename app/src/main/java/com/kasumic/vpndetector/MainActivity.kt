@@ -38,6 +38,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
@@ -133,7 +135,11 @@ class MainActivity : ComponentActivity() {
             }
             val colors = if (isDarkTheme) DarkAppColors else LightAppColors
 
-            CompositionLocalProvider(LocalAppColors provides colors) {
+            val safeUriHandler = remember { SafeUriHandler(this@MainActivity) }
+            CompositionLocalProvider(
+                LocalAppColors provides colors,
+                LocalUriHandler provides safeUriHandler
+            ) {
                 if (!hasCompletedOnboarding) {
                     MyApplicationTheme(darkTheme = isDarkTheme) {
                         Surface(
@@ -969,8 +975,8 @@ fun AboutScreen() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            AsyncImage(
-                model = "https://github.com/Kasumicic.png",
+            Image(
+                painter = painterResource(id = R.drawable.github_avatar),
                 contentDescription = "Avatar",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -1925,5 +1931,26 @@ fun getCountryName(countryCode: String, isRussian: Boolean): String {
     val displayLocale = if (isRussian) java.util.Locale("ru") else java.util.Locale("en")
     val name = localeOfCountry.getDisplayCountry(displayLocale)
     return if (name.isNotEmpty() && name != countryCode) name else countryCode
+}
+
+class SafeUriHandler(private val context: android.content.Context) : androidx.compose.ui.platform.UriHandler {
+    override fun openUri(uri: String) {
+        try {
+            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(uri)).apply {
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+        } catch (e: android.content.ActivityNotFoundException) {
+            val lang = context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE).getString("app_lang", "ru") ?: "ru"
+            val msg = if (lang == "ru") {
+                "Браузер не найден для открытия ссылки"
+            } else {
+                "No browser found to open link"
+            }
+            android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            // catch any other issues
+        }
+    }
 }
 
