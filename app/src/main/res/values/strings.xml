@@ -200,6 +200,7 @@
     <string name="custom_region_label">Custom country code (e.g. US, DE)</string>
     <string name="custom_region_placeholder">ISO 2-letter code</string>
     <string name="custom_region_error">Country code must be exactly 2 letters (e.g. US)</string>
+    <string name="search_placeholder">Search country or enter code...</string>
     <string name="support_star_title">Please support the project with a star! ⭐</string>
     <string name="support_star_desc">If you like this application and find it useful, please support us by starring our repository on GitHub.</string>
     

@@ -200,6 +200,7 @@
     <string name="custom_region_label">Свой код страны (например, RU, US)</string>
     <string name="custom_region_placeholder">Двухбуквенный ISO-код</string>
     <string name="custom_region_error">Код страны должен состоять ровно из 2 букв (например, RU)</string>
+    <string name="search_placeholder">Поиск страны или ввод кода...</string>
     <string name="support_star_title">Поддержите проект звездой! ⭐</string>
     <string name="support_star_desc">Если вам нравится наше приложение и вы находите его полезным, пожалуйста, поддержите нас, поставив звезду нашему репозиторию на GitHub.</string>
     

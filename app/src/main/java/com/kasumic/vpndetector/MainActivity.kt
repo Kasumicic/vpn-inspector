@@ -265,6 +265,22 @@ fun SettingsScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit, onPre
             colors = colors,
             onBack = { currentSubScreen = null }
         )
+    } else if (currentSubScreen == "region") {
+        val context = androidx.compose.ui.platform.LocalContext.current
+        val sharedPrefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val currentLang = sharedPrefs.getString("app_lang", "ru") ?: "ru"
+        val currentRegion = sharedPrefs.getString("target_region", "RU") ?: "RU"
+
+        RegionSelectionSubScreen(
+            currentLang = currentLang,
+            currentRegion = currentRegion,
+            onBack = { currentSubScreen = null },
+            onRegionSelected = { newRegion ->
+                sharedPrefs.edit().putString("target_region", newRegion).apply()
+                currentSubScreen = null
+                onPrefsChanged()
+            }
+        )
     } else {
         Column(
             modifier = Modifier.fillMaxSize().padding(24.dp).verticalScroll(rememberScrollState()),
@@ -291,7 +307,6 @@ fun SettingsScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit, onPre
             val currentRegion = sharedPrefs.getString("target_region", "RU") ?: "RU"
 
             var showLanguageDialog by remember { mutableStateOf(false) }
-            var showRegionDialog by remember { mutableStateOf(false) }
 
             Card(
                 modifier = Modifier.fillMaxWidth().border(1.dp, colors.border, RoundedCornerShape(16.dp)),
@@ -354,22 +369,20 @@ fun SettingsScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit, onPre
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { showRegionDialog = true }
+                            .clickable { currentSubScreen = "region" }
                             .padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
                             Text(stringResource(R.string.settings_target_region), color = colors.primaryText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                            val currentRegionName = remember(currentRegion, currentLang) {
+                                val flag = getFlagEmoji(currentRegion)
+                                val name = getCountryName(currentRegion, currentLang == "ru")
+                                "$flag $name ($currentRegion)"
+                            }
                             Text(
-                                text = when (currentRegion) {
-                                    "RU" -> "🇷🇺 Россия (RU)"
-                                    "US" -> "🇺🇸 United States (US)"
-                                    "DE" -> "🇩🇪 Germany (DE)"
-                                    "KZ" -> "🇰🇿 Казахстан (KZ)"
-                                    "UA" -> "🇺🇦 Украина (UA)"
-                                    else -> "🏳️ $currentRegion"
-                                },
+                                text = currentRegionName,
                                 color = colors.secondaryText,
                                 fontSize = 14.sp
                             )
@@ -416,125 +429,6 @@ fun SettingsScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit, onPre
                     confirmButton = {
                         TextButton(onClick = { showLanguageDialog = false }) {
                             Text(stringResource(R.string.dismiss_dialog), color = colors.primaryAction)
-                        }
-                    }
-                )
-            }
-
-            if (showRegionDialog) {
-                var customCodeInput by remember { mutableStateOf(if (currentRegion !in listOf("RU", "US", "DE", "KZ", "UA")) currentRegion else "") }
-                var isCustomClicked by remember { mutableStateOf(currentRegion !in listOf("RU", "US", "DE", "KZ", "UA")) }
-                var isValError by remember { mutableStateOf(false) }
-
-                AlertDialog(
-                    onDismissRequest = { showRegionDialog = false },
-                    containerColor = colors.surface,
-                    title = { Text(stringResource(R.string.settings_target_region), color = colors.primaryText) },
-                    text = {
-                        Column(
-                            modifier = Modifier.verticalScroll(rememberScrollState()),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            val presets = listOf(
-                                "RU" to "🇷🇺 Россия (RU)",
-                                "US" to "🇺🇸 United States (US)",
-                                "DE" to "🇩🇪 Germany (DE)",
-                                "KZ" to "🇰🇿 Казахстан (KZ)",
-                                "UA" to "🇺🇦 Украина (UA)"
-                            )
-
-                            presets.forEach { (code, name) ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .clickable {
-                                            sharedPrefs.edit().putString("target_region", code).apply()
-                                            showRegionDialog = false
-                                            onPrefsChanged()
-                                        }
-                                        .padding(12.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(name, color = colors.primaryText)
-                                    if (!isCustomClicked && currentRegion == code) {
-                                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.primaryAction)
-                                    }
-                                }
-                            }
-
-                            // Custom option
-                            Column {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .clickable { isCustomClicked = true }
-                                        .padding(12.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(stringResource(R.string.custom_region_label), color = colors.primaryText)
-                                    if (isCustomClicked) {
-                                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.primaryAction)
-                                    }
-                                }
-
-                                if (isCustomClicked) {
-                                    OutlinedTextField(
-                                        value = customCodeInput,
-                                        onValueChange = {
-                                            if (it.length <= 2) {
-                                                customCodeInput = it.uppercase().filter { ch -> ch.isLetter() }
-                                                isValError = false
-                                            }
-                                        },
-                                        placeholder = { Text("US") },
-                                        singleLine = true,
-                                        isError = isValError,
-                                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-                                        colors = OutlinedTextFieldDefaults.colors(
-                                            focusedBorderColor = colors.primaryAction,
-                                            unfocusedBorderColor = colors.border,
-                                            focusedLabelColor = colors.primaryAction,
-                                            unfocusedLabelColor = colors.secondaryText
-                                        )
-                                    )
-                                    if (isValError) {
-                                        Text(
-                                            text = stringResource(R.string.custom_region_error),
-                                            color = MaterialTheme.colorScheme.error,
-                                            fontSize = 12.sp,
-                                            modifier = Modifier.padding(start = 12.dp, top = 4.dp)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    confirmButton = {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End
-                        ) {
-                            TextButton(onClick = { showRegionDialog = false }) {
-                                Text(stringResource(R.string.dismiss_dialog), color = colors.primaryAction)
-                            }
-                            if (isCustomClicked) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                TextButton(onClick = {
-                                    if (customCodeInput.length != 2) {
-                                        isValError = true
-                                    } else {
-                                        sharedPrefs.edit().putString("target_region", customCodeInput).apply()
-                                        showRegionDialog = false
-                                        onPrefsChanged()
-                                    }
-                                }) {
-                                    Text(stringResource(R.string.btn_save_and_continue), color = colors.primaryAction, fontWeight = FontWeight.Bold)
-                                }
-                            }
                         }
                     }
                 )
@@ -1479,6 +1373,7 @@ fun OnboardingScreen(
     var customRegionCode by remember { mutableStateOf("") }
     var isCustomSelected by remember { mutableStateOf(false) }
     var showError by remember { mutableStateOf(false) }
+    var showOnboardingRegionDialog by remember { mutableStateOf(false) }
 
     val presetRegions = listOf(
         "RU" to ("🇷🇺 " + (if (selectedLanguage == "ru") "Россия" else "Russia")),
@@ -1488,6 +1383,303 @@ fun OnboardingScreen(
         "UA" to ("🇺🇦 " + (if (selectedLanguage == "ru") "Украина" else "Ukraine"))
     )
 
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (showOnboardingRegionDialog) {
+            RegionSelectionSubScreen(
+                currentLang = selectedLanguage,
+                currentRegion = if (isCustomSelected) customRegionCode else selectedRegion,
+                onBack = { showOnboardingRegionDialog = false },
+                onRegionSelected = { newRegion ->
+                    if (presetRegions.any { it.first == newRegion }) {
+                        isCustomSelected = false
+                        selectedRegion = newRegion
+                    } else {
+                        isCustomSelected = true
+                        customRegionCode = newRegion
+                    }
+                    showOnboardingRegionDialog = false
+                    showError = false
+                }
+            )
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(colors.background)
+                    .statusBarsPadding()
+                    .navigationBarsPadding()
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                    tint = colors.primaryAction,
+                    modifier = Modifier.size(80.dp)
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = if (selectedLanguage == "ru") "Добро пожаловать в VPN Inspector" else "Welcome to VPN Inspector",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.primaryText,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = if (selectedLanguage == "ru") 
+                        "Для продолжения выберите язык приложения и целевой регион для проверки GeoIP (страна, в которой вы ожидаете находиться без активного VPN)." 
+                        else "Please select your preferred app language and target GeoIP region to start. The target region is the country you expect to be geolocated in when no VPN is active.",
+                    fontSize = 14.sp,
+                    color = colors.secondaryText,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 20.sp
+                )
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Language block
+                Text(
+                    text = if (selectedLanguage == "ru") "Язык приложения / Language" else "Application Language / Язык",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.primaryText,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    listOf("ru" to "Русский", "en" to "English").forEach { (code, name) ->
+                        val isSelected = selectedLanguage == code
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(50.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (isSelected) colors.primaryAction else colors.surface)
+                                .border(1.dp, if (isSelected) colors.primaryAction else colors.border, RoundedCornerShape(12.dp))
+                                .clickable { selectedLanguage = code }
+                                .padding(8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = name,
+                                color = if (isSelected) colors.primaryActionText else colors.primaryText,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Target Region block
+                Text(
+                    text = if (selectedLanguage == "ru") "Целевой регион GeoIP / Target Region" else "Target GeoIP Region / Целевой регион",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.primaryText,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    presetRegions.forEach { (code, name) ->
+                        val isSelected = !isCustomSelected && selectedRegion == code
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (isSelected) colors.primaryAction.copy(alpha = 0.15f) else colors.surface)
+                                .border(1.dp, if (isSelected) colors.primaryAction else colors.border, RoundedCornerShape(12.dp))
+                                .clickable {
+                                    isCustomSelected = false
+                                    selectedRegion = code
+                                    showError = false
+                                }
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(text = name, color = colors.primaryText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                            RadioButton(
+                                selected = isSelected,
+                                onClick = {
+                                    isCustomSelected = false
+                                    selectedRegion = code
+                                    showError = false
+                                },
+                                colors = RadioButtonDefaults.colors(selectedColor = colors.primaryAction, unselectedColor = colors.secondaryText)
+                            )
+                        }
+                    }
+
+                    // Custom Region Option
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (isCustomSelected) colors.primaryAction.copy(alpha = 0.15f) else colors.surface)
+                            .border(1.dp, if (isCustomSelected) colors.primaryAction else colors.border, RoundedCornerShape(12.dp))
+                            .clickable {
+                                isCustomSelected = true
+                                showError = false
+                            }
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = if (selectedLanguage == "ru") "Другой (свой код)" else "Other (Custom code)",
+                            color = colors.primaryText,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        RadioButton(
+                            selected = isCustomSelected,
+                            onClick = {
+                                isCustomSelected = true
+                                showError = false
+                            },
+                            colors = RadioButtonDefaults.colors(selectedColor = colors.primaryAction, unselectedColor = colors.secondaryText)
+                        )
+                    }
+                }
+
+                if (isCustomSelected) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = customRegionCode,
+                        onValueChange = { input ->
+                            if (input.length <= 2) {
+                                customRegionCode = input.uppercase().filter { it.isLetter() }
+                                showError = false
+                            }
+                        },
+                        label = { Text(if (selectedLanguage == "ru") "Код страны (2 буквы, например US)" else "Country code (2 letters, e.g. US)") },
+                        placeholder = { Text("US") },
+                        trailingIcon = {
+                            IconButton(onClick = { showOnboardingRegionDialog = true }) {
+                                Icon(Icons.Default.Search, contentDescription = null, tint = colors.primaryAction)
+                            }
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = showError,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = colors.primaryAction,
+                            unfocusedBorderColor = colors.border,
+                            focusedLabelColor = colors.primaryAction,
+                            unfocusedLabelColor = colors.secondaryText
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    TextButton(
+                        onClick = { showOnboardingRegionDialog = true },
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp), tint = colors.primaryAction)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (selectedLanguage == "ru") "Поиск по всем странам..." else "Browse all countries...",
+                            color = colors.primaryAction,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    if (showError) {
+                        Text(
+                            text = if (selectedLanguage == "ru") "Код страны должен состоять ровно из 2 букв" else "Country code must be exactly 2 letters",
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 12.sp,
+                            modifier = Modifier.align(Alignment.Start).padding(top = 4.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Button(
+                    onClick = {
+                        val region = if (isCustomSelected) {
+                            if (customRegionCode.length != 2) {
+                                showError = true
+                                return@Button
+                            }
+                            customRegionCode
+                        } else {
+                            selectedRegion
+                        }
+                        onCompleted(selectedLanguage, region)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.primaryAction,
+                        contentColor = colors.primaryActionText
+                    ),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text(
+                        text = if (selectedLanguage == "ru") "Сохранить и продолжить" else "Save and Continue",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RegionSelectionSubScreen(
+    currentLang: String,
+    currentRegion: String,
+    onBack: () -> Unit,
+    onRegionSelected: (String) -> Unit
+) {
+    val colors = LocalAppColors.current
+    val isRussian = currentLang == "ru"
+    var searchQuery by remember { mutableStateOf("") }
+
+    val popularCountryCodes = remember {
+        listOf("RU", "US", "DE", "KZ", "UA", "GB", "FR", "NL", "TR", "CN")
+    }
+
+    val allCountryCodes = remember(isRussian) {
+        java.util.Locale.getISOCountries().toList()
+            .map { code -> code to getCountryName(code, isRussian) }
+            .sortedBy { it.second }
+    }
+
+    val filteredCountries = remember(searchQuery, allCountryCodes) {
+        if (searchQuery.isBlank()) {
+            allCountryCodes
+        } else {
+            allCountryCodes.filter { (code, name) ->
+                code.contains(searchQuery, ignoreCase = true) ||
+                name.contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }
+
+    val directCode = searchQuery.trim().uppercase()
+    val isDirectCodeValid = directCode.length == 2 && directCode.all { it.isLetter() }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -1495,93 +1687,171 @@ fun OnboardingScreen(
             .statusBarsPadding()
             .navigationBarsPadding()
             .padding(24.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            imageVector = Icons.Default.Search,
-            contentDescription = null,
-            tint = colors.primaryAction,
-            modifier = Modifier.size(80.dp)
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = if (selectedLanguage == "ru") "Добро пожаловать в VPN Inspector" else "Welcome to VPN Inspector",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = colors.primaryText,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text(
-            text = if (selectedLanguage == "ru") 
-                "Для продолжения выберите язык приложения и целевой регион для проверки GeoIP (страна, в которой вы ожидаете находиться без активного VPN)." 
-                else "Please select your preferred app language and target GeoIP region to start. The target region is the country you expect to be geolocated in when no VPN is active.",
-            fontSize = 14.sp,
-            color = colors.secondaryText,
-            textAlign = TextAlign.Center,
-            lineHeight = 20.sp
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Language block
-        Text(
-            text = if (selectedLanguage == "ru") "Язык приложения / Language" else "Application Language / Язык",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = colors.primaryText,
-            modifier = Modifier.align(Alignment.Start)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
+        // Back navigation header
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            listOf("ru" to "Русский", "en" to "English").forEach { (code, name) ->
-                val isSelected = selectedLanguage == code
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(50.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (isSelected) colors.primaryAction else colors.surface)
-                        .border(1.dp, if (isSelected) colors.primaryAction else colors.border, RoundedCornerShape(12.dp))
-                        .clickable { selectedLanguage = code }
-                        .padding(8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = if (isRussian) "Назад" else "Back",
+                    tint = colors.primaryAction
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = if (isRussian) "Выбор целевого региона" else "Select Target Region",
+                fontSize = 20.sp,
+                color = colors.primaryText,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = if (isRussian) 
+                "Комплексный GeoIP-анализ сопоставляет ваш реальный IP с установленной целевой страной. Отклонение сигнализирует об активности обходных туннелей."
+                else "GeoIP analysis matches your active IP with the selected target country. Discrepancies report an active bypass tunnel.",
+            color = colors.secondaryText,
+            fontSize = 13.sp
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Search Bar
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            placeholder = { Text(if (isRussian) "Поиск страны или ISO код..." else "Search country or ISO code...") },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = colors.secondaryText) },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { searchQuery = "" }) {
+                        Icon(Icons.Default.Close, contentDescription = null, tint = colors.secondaryText)
+                    }
+                }
+            },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = colors.primaryAction,
+                unfocusedBorderColor = colors.border,
+                focusedLabelColor = colors.primaryAction,
+                unfocusedLabelColor = colors.secondaryText
+            )
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Direct ISO match suggestion if typed in search but does not exist in localized name perfectly
+            if (isDirectCodeValid && filteredCountries.none { it.first == directCode }) {
+                item {
+                    val flag = getFlagEmoji(directCode)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(colors.primaryAction.copy(alpha = 0.1f))
+                            .border(1.dp, colors.primaryAction, RoundedCornerShape(12.dp))
+                            .clickable {
+                                onRegionSelected(directCode)
+                            }
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(flag, fontSize = 24.sp)
+                            Column {
+                                Text(
+                                    text = if (isRussian) "Использовать код \"$directCode\"" else "Use custom code \"$directCode\"",
+                                    color = colors.primaryAction,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp
+                                )
+                                Text(
+                                    text = if (isRussian) "Пользовательский ввод" else "Custom code override",
+                                    color = colors.secondaryText,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.primaryAction)
+                    }
+                }
+            }
+
+            // If empty search, render popular countries first
+            if (searchQuery.isBlank()) {
+                item {
                     Text(
-                        text = name,
-                        color = if (isSelected) colors.primaryActionText else colors.primaryText,
+                        text = if (isRussian) "Популярные страны" else "Popular Countries",
+                        color = colors.secondaryActionText,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
+                        modifier = Modifier.padding(vertical = 4.dp, horizontal = 4.dp)
+                    )
+                }
+
+                items(popularCountryCodes) { code ->
+                    val isSelected = currentRegion == code
+                    val flag = getFlagEmoji(code)
+                    val name = getCountryName(code, isRussian)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (isSelected) colors.primaryAction.copy(alpha = 0.15f) else colors.surface)
+                            .border(1.dp, if (isSelected) colors.primaryAction else colors.border, RoundedCornerShape(12.dp))
+                            .clickable {
+                                onRegionSelected(code)
+                            }
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(flag, fontSize = 24.sp)
+                            Text(
+                                name,
+                                color = colors.primaryText,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                fontSize = 16.sp
+                            )
+                        }
+                        if (isSelected) {
+                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.primaryAction)
+                        }
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = if (isRussian) "Все страны" else "All Countries",
+                        color = colors.secondaryActionText,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(vertical = 4.dp, horizontal = 4.dp)
                     )
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Target Region block
-        Text(
-            text = if (selectedLanguage == "ru") "Целевой регион GeoIP / Target Region" else "Target GeoIP Region / Целевой регион",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = colors.primaryText,
-            modifier = Modifier.align(Alignment.Start)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            presetRegions.forEach { (code, name) ->
-                val isSelected = !isCustomSelected && selectedRegion == code
+            // All countries list or search results
+            items(filteredCountries) { (code, name) ->
+                val isSelected = currentRegion == code
+                val flag = getFlagEmoji(code)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1589,120 +1859,59 @@ fun OnboardingScreen(
                         .background(if (isSelected) colors.primaryAction.copy(alpha = 0.15f) else colors.surface)
                         .border(1.dp, if (isSelected) colors.primaryAction else colors.border, RoundedCornerShape(12.dp))
                         .clickable {
-                            isCustomSelected = false
-                            selectedRegion = code
-                            showError = false
+                            onRegionSelected(code)
                         }
                         .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = name, color = colors.primaryText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                    RadioButton(
-                        selected = isSelected,
-                        onClick = {
-                            isCustomSelected = false
-                            selectedRegion = code
-                            showError = false
-                        },
-                        colors = RadioButtonDefaults.colors(selectedColor = colors.primaryAction, unselectedColor = colors.secondaryText)
-                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(flag, fontSize = 24.sp)
+                        Text(
+                            name,
+                            color = colors.primaryText,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            fontSize = 16.sp
+                        )
+                    }
+                    if (isSelected) {
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.primaryAction)
+                    }
                 }
             }
 
-            // Custom Region Option
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(if (isCustomSelected) colors.primaryAction.copy(alpha = 0.15f) else colors.surface)
-                    .border(1.dp, if (isCustomSelected) colors.primaryAction else colors.border, RoundedCornerShape(12.dp))
-                    .clickable {
-                        isCustomSelected = true
-                        showError = false
+            if (filteredCountries.isEmpty() && !isDirectCodeValid) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (isRussian) "Ничего не найдено" else "No countries found",
+                            color = colors.secondaryText,
+                            textAlign = TextAlign.Center,
+                            fontSize = 16.sp
+                        )
                     }
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = if (selectedLanguage == "ru") "Другой (свой код)" else "Other (Custom code)",
-                    color = colors.primaryText,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                RadioButton(
-                    selected = isCustomSelected,
-                    onClick = {
-                        isCustomSelected = true
-                        showError = false
-                    },
-                    colors = RadioButtonDefaults.colors(selectedColor = colors.primaryAction, unselectedColor = colors.secondaryText)
-                )
-            }
-        }
-
-        if (isCustomSelected) {
-            Spacer(modifier = Modifier.height(12.dp))
-            OutlinedTextField(
-                value = customRegionCode,
-                onValueChange = { input ->
-                    if (input.length <= 2) {
-                        customRegionCode = input.uppercase().filter { it.isLetter() }
-                        showError = false
-                    }
-                },
-                label = { Text(if (selectedLanguage == "ru") "Код страны (2 буквы, например US)" else "Country code (2 letters, e.g. US)") },
-                placeholder = { Text("US") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                isError = showError,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = colors.primaryAction,
-                    unfocusedBorderColor = colors.border,
-                    focusedLabelColor = colors.primaryAction,
-                    unfocusedLabelColor = colors.secondaryText
-                )
-            )
-            if (showError) {
-                Text(
-                    text = if (selectedLanguage == "ru") "Код страны должен состоять ровно из 2 букв" else "Country code must be exactly 2 letters",
-                    color = MaterialTheme.colorScheme.error,
-                    fontSize = 12.sp,
-                    modifier = Modifier.align(Alignment.Start).padding(top = 4.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = {
-                val region = if (isCustomSelected) {
-                    if (customRegionCode.length != 2) {
-                        showError = true
-                        return@Button
-                    }
-                    customRegionCode
-                } else {
-                    selectedRegion
                 }
-                onCompleted(selectedLanguage, region)
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = colors.primaryAction,
-                contentColor = colors.primaryActionText
-            ),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Text(
-                text = if (selectedLanguage == "ru") "Сохранить и продолжить" else "Save and Continue",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
+            }
         }
     }
 }
+
+fun getFlagEmoji(countryCode: String): String {
+    if (countryCode.length != 2) return "🏳️"
+    val firstChar = countryCode[0].uppercaseChar() - 'A' + 0x1F1E6
+    val secondChar = countryCode[1].uppercaseChar() - 'A' + 0x1F1E6
+    return String(Character.toChars(firstChar)) + String(Character.toChars(secondChar))
+}
+
+fun getCountryName(countryCode: String, isRussian: Boolean): String {
+    val localeOfCountry = java.util.Locale("", countryCode)
+    val displayLocale = if (isRussian) java.util.Locale("ru") else java.util.Locale("en")
+    val name = localeOfCountry.getDisplayCountry(displayLocale)
+    return if (name.isNotEmpty() && name != countryCode) name else countryCode
+}
+
