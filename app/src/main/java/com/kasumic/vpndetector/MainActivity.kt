@@ -947,6 +947,32 @@ fun AboutScreen() {
 
         Spacer(modifier = Modifier.height(32.dp))
 
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, colors.border, RoundedCornerShape(16.dp)),
+            colors = CardDefaults.cardColors(containerColor = colors.surface),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = stringResource(R.string.provider_info_title),
+                    color = colors.primaryText,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.provider_info_desc),
+                    color = colors.secondaryText,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
         Button(
             onClick = { showMethodology = true },
             modifier = Modifier.fillMaxWidth().height(56.dp),

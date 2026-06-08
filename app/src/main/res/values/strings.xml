@@ -30,7 +30,7 @@
     <string name="bullet_fake_ip_title">• IP Spoofing</string>
     <string name="bullet_fake_ip_desc">Checking if fake local IP addresses are returned to domains (Fake-IP tunneling).</string>
     <string name="bullet_latency_title">• Network Latencies (SNITCH)</string>
-    <string name="bullet_latency_desc">Comparison of ping to national (RU) and European (EU) nodes.</string>
+    <string name="bullet_latency_desc">Comparison of ping to local and remote nodes.</string>
     <string name="bullet_datacenter_title">• Datacenter &amp; Hosting Detection</string>
     <string name="bullet_datacenter_desc">Analyzing if IP belongs to a hosting service/datacenter (IP Type verification).</string>
     
@@ -156,14 +156,16 @@
     <string name="snitch_timeout">Timeout (network unavailable)</string>
     <string name="snitch_desc_rtt">Analysis of RTT to control landmarks.</string>
     <string name="snitch_timeout_fix">Network unavailable or ports blocked.</string>
-    <string name="snitch_intercept">PROXY INTERCEPT (RU:%1$sms / EU:%2$sms)</string>
+    <string name="snitch_intercept">PROXY INTERCEPT (Local:%1$sms / Remote:%2$sms)</string>
     <string name="snitch_intercept_desc">Too low ping (&lt;= 2ms) is impossible in real networks and indicates TCP intercept by a local proxy.</string>
-    <string name="snitch_intercept_fix">Add check hosts (ya.ru, google.com) to your routing exclusions (bypass-rules) in the proxy client, so that packet roundtrips bypass the local interception sockets and travel natively.</string>
-    <string name="snitch_anomaly">ANOMALY (RU:%1$sms / EU:%2$sms)</string>
-    <string name="snitch_anomaly_desc">Abnormally high latency to local (RU) node compared to foreign (EU) node indicates VPN usage.</string>
+    <string name="snitch_intercept_fix">Add check hosts (google.com, cloudflare.com) to your routing exclusions (bypass-rules) in the proxy client, so that packet roundtrips bypass the local interception sockets and travel natively.</string>
+    <string name="snitch_anomaly">ANOMALY (Local:%1$sms / Remote:%2$sms)</string>
+    <string name="snitch_anomaly_desc">Abnormally high latency to local node compared to remote node indicates VPN usage.</string>
     <string name="snitch_anomaly_fix">Connect to ultra-low latency entry nodes closest to your physical location, use lightweight protocols (WireGuard/AmneziaWG instead of OpenVPN TCP), or configure direct routing exemptions for latency-measured host addresses.</string>
-    <string name="snitch_clean">Within norm (RU:%1$sms / EU:%2$sms)</string>
-    <string name="snitch_desc_rtt_clean">Comparing ping (TCP RTT) for national and foreign nodes.</string>
+    <string name="snitch_clean">Within norm (Local:%1$sms / Remote:%2$sms)</string>
+    <string name="snitch_desc_rtt_clean">Comparing ping (TCP RTT) for local and remote nodes.</string>
+    <string name="snitch_intercept_single">PROXY INTERCEPT (Ping: %1$sms)</string>
+    <string name="snitch_clean_single">Within norm (Ping: %1$sms)</string>
 
     <string name="ipv6_leak_title">IPv6 Leak</string>
     <string name="ipv6_leak_detected">LEAK! IPv4 is encrypted (%1$s), but IPv6 goes directly (%2$s, Country: %3$s)</string>
@@ -231,5 +233,7 @@
     <string name="settings_section_checks_desc">Configure which tests run during scanning (for experienced users).</string>
     <string name="settings_back">Back</string>
     <string name="settings_reset_checks">Reset to Default</string>
-    <string name="api_notice_text">Scanning will send requests to sypexgeo.net, ipify.org, ipapi.is, ipapi.co, ipwho.is, and freeipapi.com to determine your IP/Leak status.</string>
+    <string name="api_notice_text">Using independent GeoIP providers. Additional requests are sent to external latency nodes (SNITCH) to measure network delays. See details in the Info tab.</string>
+    <string name="provider_info_title">Network APIs &amp; Hosts Used</string>
+    <string name="provider_info_desc">To perform scanning and analyze connection quality, independent public services are used:\n\n• sypexgeo.net, ipify.org, ipapi.is, ipapi.co, ipwho.is, freeipapi.com — external GeoIP API providers to determine your current IP and check for route leaks.\n\n• google.com — latency testing endpoint for measuring round-trip time (RTT/SNITCH).\n\n• ya.ru (Yandex) — additional latency endpoint used specifically when target region is set to Russia (RU) to detect traffic routing anomalies indicating the presence of a bypass tool.</string>
 </resources>

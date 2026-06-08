@@ -164,6 +164,8 @@
     <string name="snitch_anomaly_fix">Настройте низколатентные шлюзы (ближайшие к вашей физической локации VPN-серверы), используйте высокопроизводительные протоколы без избыточных оберток (WireGuard/AmneziaWG вместо OpenVPN-over-TCP), либо пропишите прямое (Direct) прохождение трафика для измеряемых ресурсов.</string>
     <string name="snitch_clean">В пределах нормы (RU:%1$sмс / EU:%2$sмс)</string>
     <string name="snitch_desc_rtt_clean">Сравнение пинга (TCP RTT) для национальных и зарубежных узлов.</string>
+    <string name="snitch_intercept_single">ПЕРЕХВАТ ПРОКСИ (Пинг: %1$sмс)</string>
+    <string name="snitch_clean_single">В пределах нормы (Пинг: %1$sмс)</string>
 
     <string name="ipv6_leak_title">Утечка IPv6 (IPv6 Leak)</string>
     <string name="ipv6_leak_detected">УТЕЧКА! IPv4 зашифрован (%1$s), но IPv6 идет напрямую (%2$s, Страна: %3$s)</string>
@@ -231,5 +233,7 @@
     <string name="settings_section_checks_desc">Настройте, какие тесты активны при сканировании (для опытных пользователей).</string>
     <string name="settings_back">Назад</string>
     <string name="settings_reset_checks">Сбросить настройки</string>
-    <string name="api_notice_text">Сканирование отправит запросы к sypexgeo.net, ipify.org, ipapi.is, ipapi.co, ipwho.is и freeipapi.com для определения вашего IP-адреса и статуса утечек.</string>
+    <string name="api_notice_text">Используются независимые GeoIP-провайдеры. Дополнительно запрашиваются внешние хосты для теста сетевых задержек (SNITCH). подробнее во вкладке О приложении.</string>
+    <string name="provider_info_title">Используемые сетевые API и хосты</string>
+    <string name="provider_info_desc">Для проведения сканирования и анализа качества подключения используются независимые публичные сервисы:\n\n• sypexgeo.net, ipify.org, ipapi.is, ipapi.co, ipwho.is, freeipapi.com — внешние GeoIP-провайдеры для определения IP-адреса и проверки утечек.\n\n• google.com — тестовый узел для анализа задержек RTT (SNITCH).\n\n• ya.ru (Яндекс) — дополнительный тестовый сетевой узел для задержек RTT (SNITCH), опрашиваемый только если выбран целевой регион РФ (RU), для выявления аномалий маршрутизации трафика через VPN.</string>
 </resources>
