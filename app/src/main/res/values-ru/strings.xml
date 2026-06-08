@@ -3,7 +3,7 @@
     <string name="tab_scan">Проверка</string>
     <string name="tab_settings">Настройки</string>
     <string name="tab_info">Инфо</string>
-    <string name="version_title">Версия 1.5</string>
+    <string name="version_title">Версия 1.6</string>
     <string name="source_code">Исходный код</string>
     <string name="dark_theme">Тёмная тема</string>
     <string name="about_app_title">О приложении</string>
@@ -233,7 +233,7 @@
     <string name="settings_section_checks_desc">Настройте, какие тесты активны при сканировании (для опытных пользователей).</string>
     <string name="settings_back">Назад</string>
     <string name="settings_reset_checks">Сбросить настройки</string>
-    <string name="api_notice_text">Используются независимые GeoIP-провайдеры. Дополнительно запрашиваются внешние хосты для теста сетевых задержек (SNITCH). подробнее во вкладке О приложении.</string>
+    <string name="api_notice_text">Используются независимые GeoIP-провайдеры. Дополнительно запрашиваются внешние хосты для теста сетевых задержек (SNITCH). подробнее во вкладке Инфо.</string>
     <string name="provider_info_title">Используемые сетевые API и хосты</string>
     <string name="provider_info_desc">Для проведения сканирования и анализа качества подключения используются независимые публичные сервисы:\n\n• sypexgeo.net, ipify.org, ipapi.is, ipapi.co, ipwho.is, freeipapi.com — внешние GeoIP-провайдеры для определения IP-адреса и проверки утечек.\n\n• google.com — тестовый узел для анализа задержек RTT (SNITCH).\n\n• ya.ru (Яндекс) — дополнительный тестовый сетевой узел для задержек RTT (SNITCH), опрашиваемый только если выбран целевой регион РФ (RU), для выявления аномалий маршрутизации трафика через VPN.</string>
 </resources>

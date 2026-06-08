@@ -98,6 +98,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             _uiState.value = _uiState.value.copy(ipAddress = ip, results = scanResults.toList())
 
+            if (isDatacenterEnabled) {
+                currentStepIndex++
+                _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_13, currentStepIndex))
+                scanResults.add(localScanner.checkDatacenter(ip))
+                _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            }
+
             if (isIpv6LeakEnabled) {
                 currentStepIndex++
                 _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_2, currentStepIndex))
@@ -172,13 +179,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 currentStepIndex++
                 _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_12, currentStepIndex))
                 scanResults.add(localScanner.analyzeLatency())
-                _uiState.value = _uiState.value.copy(results = scanResults.toList())
-            }
-
-            if (isDatacenterEnabled) {
-                currentStepIndex++
-                _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_13, currentStepIndex))
-                scanResults.add(localScanner.checkDatacenter(ip))
                 _uiState.value = _uiState.value.copy(results = scanResults.toList())
             }
             

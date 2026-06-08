@@ -11,7 +11,7 @@ import java.net.Socket
 
 class LatencyCheck(private val context: Context) {
     suspend fun run(): ScanResult = withContext(Dispatchers.IO) {
-        fun getTcpPing(host: String, port: Int = 80): Int {
+        fun getTcpPing(host: String, port: Int = 443): Int {
             return try {
                 val address = InetAddress.getByName(host)
                 val start = System.nanoTime()
