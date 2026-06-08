@@ -31,6 +31,8 @@
     <string name="bullet_fake_ip_desc">Проверка выдачи фейковых локальных IP-адресов доменам (Fake-IP туннелирование).</string>
     <string name="bullet_latency_title">• Сетевые задержки (SNITCH)</string>
     <string name="bullet_latency_desc">Сравнение пинга до национальных (RU) и зарубежных (EU) узлов.</string>
+    <string name="bullet_datacenter_title">• Детект дата-центров и хостингов</string>
+    <string name="bullet_datacenter_desc">Анализ принадлежности IP к облачным хостингам и дата-центрам (проверка типа IP).</string>
     
     <string name="btn_read_methodology">Читать Методичку</string>
     <string name="developer_title">Разработчик</string>
@@ -51,19 +53,20 @@
     <string name="unknown_val">Неизвестно</string>
     <string name="checking_val">Проверка…</string>
 
-    <string name="scan_step_0">Настройка сканирования (0/12)</string>
-    <string name="scan_step_1">Анализ IP и GeoIP (1/12)…</string>
-    <string name="scan_step_2">Проверка утечки IPv6 (2/12)…</string>
-    <string name="scan_step_3">Проверка системного VPN (3/12)…</string>
-    <string name="scan_step_4">Проверка системных Proxy (4/12)…</string>
-    <string name="scan_step_5">Проверка пакетов (5/12)…</string>
-    <string name="scan_step_6">Проверка флага NOT_VPN (6/12)…</string>
-    <string name="scan_step_7">Проверка интерфейсов (7/12)…</string>
-    <string name="scan_step_8">Проверка MTU (8/12)…</string>
-    <string name="scan_step_9">Проверка локального прокси (9/12)…</string>
-    <string name="scan_step_10">Проверка Fake-IP (10/12)…</string>
-    <string name="scan_step_11">Проверка DNS серверов (11/12)…</string>
-    <string name="scan_step_12">Анализ сетевой задержки (12/12)…</string>
+    <string name="scan_step_0">Настройка сканирования (0/13)</string>
+    <string name="scan_step_1">Анализ IP и GeoIP (1/13)…</string>
+    <string name="scan_step_2">Проверка утечки IPv6 (2/13)…</string>
+    <string name="scan_step_3">Проверка системного VPN (3/13)…</string>
+    <string name="scan_step_4">Проверка системных Proxy (4/13)…</string>
+    <string name="scan_step_5">Проверка пакетов (5/13)…</string>
+    <string name="scan_step_6">Проверка флага NOT_VPN (6/13)…</string>
+    <string name="scan_step_7">Проверка интерфейсов (7/13)…</string>
+    <string name="scan_step_8">Проверка MTU (8/13)…</string>
+    <string name="scan_step_9">Проверка локального прокси (9/13)…</string>
+    <string name="scan_step_10">Проверка Fake-IP (10/13)…</string>
+    <string name="scan_step_11">Проверка DNS серверов (11/13)…</string>
+    <string name="scan_step_12">Анализ сетевой задержки (12/13)…</string>
+    <string name="scan_step_13">Проверка типа IP (13/13)…</string>
 
     <!-- Scan Results localization -->
     <string name="geo_analysis_title">Анализ IP (GeoIP)</string>
@@ -174,6 +177,14 @@
     <string name="ipv6_leak_desc_clean">Анализ утечки реального IPv6-адреса через незащищенные маршруты.</string>
     <string name="ipv6_leak_fix">Активируйте в настройках VPN-клиента блокировку нетуннелируемого IPv6-трафика (опция \'Block Non-VPN Traffic\' или принудительный редирект ::/0), полностью отключите IPv6 в APN-профиле мобильного оператора на устройстве, либо деактивируйте IPv6 на уровне роутера (SLAAC/DHCPv6).</string>
 
+    <string name="datacenter_check_title">Тип IP (Дата-центры)</string>
+    <string name="datacenter_check_detected">ДАТА-ЦЕНТР/ХОСТИНГ! (Сервис: %1$s, VPN: %2$s, Proxy: %3$s, Tor: %4$s)</string>
+    <string name="datacenter_check_clean">ЧИСТО (Пользовательский IP, Провайдер: %1$s, Тип: %2$s)</string>
+    <string name="datacenter_check_desc">Определение принадлежности внешнего IP к серверным пулам облачных платформ, публичных VPN-серверов, SOCKS прокси или выходных узлов Tor.</string>
+    <string name="datacenter_check_desc_clean">Проверка принадлежности IP к облачным хостингам или дата-центрам.</string>
+    <string name="datacenter_check_fix">Маршрутизируйте трафик через резидентные прокси-серверы (Residential IPs) или резидентные VPN-ноды, закрепленные за домашними интернет-провайдерами физических лиц (Билайн, Ростелеком, МТС, Comcast), полностью избегая корпоративных дата-центров (DigitalOcean, AWS, Hetzner, OVH, Selectel).</string>
+    <string name="datacenter_check_error">Ошибка проверки типа IP: %1$s</string>
+
     <string name="share_report_title">🔍 VPN Inspector Scan Report\n\n</string>
     <string name="share_final_status">Итоговый статус: </string>
     <string name="share_result_detected">🔴 ОБНАРУЖЕН ОБХОД\n</string>
@@ -220,4 +231,5 @@
     <string name="settings_section_checks_desc">Настройте, какие тесты активны при сканировании (для опытных пользователей).</string>
     <string name="settings_back">Назад</string>
     <string name="settings_reset_checks">Сбросить настройки</string>
+    <string name="api_notice_text">Сканирование отправит запросы к sypexgeo.net, ipify.org, ipapi.is, ipapi.co, ipwho.is и freeipapi.com для определения вашего IP-адреса и статуса утечек.</string>
 </resources>

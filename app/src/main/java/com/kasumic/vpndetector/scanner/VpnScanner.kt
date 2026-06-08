@@ -68,4 +68,8 @@ class VpnScanner(private val context: Context) {
     suspend fun analyzeLatency(): ScanResult {
         return LatencyCheck(context).run()
     }
+
+    suspend fun checkDatacenter(ip: String?): ScanResult {
+        return DatacenterCheck(context).run(ip)
+    }
 }

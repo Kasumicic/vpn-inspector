@@ -35,19 +35,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     init {
-        val localContext = getLocalizedContext()
-        _uiState = MutableStateFlow(ScannerUiState(ipAddress = localContext.getString(R.string.checking_val)))
+        _uiState = MutableStateFlow(ScannerUiState(ipAddress = "—"))
         uiState = _uiState.asStateFlow()
-        fetchIpOnly()
-    }
-
-    private fun fetchIpOnly() {
-        viewModelScope.launch {
-            val localContext = getLocalizedContext()
-            val localScanner = VpnScanner(localContext)
-            val (ip, _) = localScanner.getIpInfo()
-            _uiState.value = _uiState.value.copy(ipAddress = ip)
-        }
     }
 
     fun startScan() {
@@ -81,11 +70,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val isFakeIpEnabled = sharedPrefs.getBoolean("check_fake_ip", true)
             val isDnsEnabled = sharedPrefs.getBoolean("check_dns_servers", true)
             val isLatencyEnabled = sharedPrefs.getBoolean("check_latency", true)
+            val isDatacenterEnabled = sharedPrefs.getBoolean("check_datacenter", true)
 
             val totalActiveSteps = listOf(
                 isGeoEnabled, isIpv6LeakEnabled, isDirectApiEnabled, isProxySettingsEnabled,
                 isVpnAppsEnabled, isNotVpnEnabled, isInterfacesEnabled, isMtuEnabled,
-                isLocalProxiesEnabled, isFakeIpEnabled, isDnsEnabled, isLatencyEnabled
+                isLocalProxiesEnabled, isFakeIpEnabled, isDnsEnabled, isLatencyEnabled,
+                isDatacenterEnabled
             ).count { it }
 
             var currentStepIndex = 0
@@ -183,6 +174,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 scanResults.add(localScanner.analyzeLatency())
                 _uiState.value = _uiState.value.copy(results = scanResults.toList())
             }
+
+            if (isDatacenterEnabled) {
+                currentStepIndex++
+                _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_13, currentStepIndex))
+                scanResults.add(localScanner.checkDatacenter(ip))
+                _uiState.value = _uiState.value.copy(results = scanResults.toList())
+            }
             
             // Calculate dynamic trust score based on individual check weights
             var penaltySum = 0
@@ -211,6 +209,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                 localContext.getString(R.string.mtu_anomalies_title) -> penaltySum += 10 // Reduced MTU packet size
                                 localContext.getString(R.string.dns_check_title) -> penaltySum += 15 // Off-provider public/private DNS
                                 localContext.getString(R.string.ipv6_leak_title) -> penaltySum += 15 // IPv6 leakage / split routing mismatch
+                                localContext.getString(R.string.datacenter_check_title) -> penaltySum += 30 // Datacenter / hosting IP
                                 else -> penaltySum += 15
                             }
                         }

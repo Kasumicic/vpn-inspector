@@ -31,6 +31,8 @@
     <string name="bullet_fake_ip_desc">Checking if fake local IP addresses are returned to domains (Fake-IP tunneling).</string>
     <string name="bullet_latency_title">• Network Latencies (SNITCH)</string>
     <string name="bullet_latency_desc">Comparison of ping to national (RU) and European (EU) nodes.</string>
+    <string name="bullet_datacenter_title">• Datacenter &amp; Hosting Detection</string>
+    <string name="bullet_datacenter_desc">Analyzing if IP belongs to a hosting service/datacenter (IP Type verification).</string>
     
     <string name="btn_read_methodology">Read Manual</string>
     <string name="developer_title">Developer</string>
@@ -51,19 +53,20 @@
     <string name="unknown_val">Unknown</string>
     <string name="checking_val">Checking…</string>
 
-    <string name="scan_step_0">Configuring scan (0/12)</string>
-    <string name="scan_step_1">IP &amp; GeoIP Analysis (1/12)…</string>
-    <string name="scan_step_2">Checking for IPv6 leakage (2/12)…</string>
-    <string name="scan_step_3">Checking system VPN (3/12)…</string>
-    <string name="scan_step_4">Checking system Proxies (4/12)…</string>
-    <string name="scan_step_5">Checking packages (5/12)…</string>
-    <string name="scan_step_6">Checking NOT_VPN flag (6/12)…</string>
-    <string name="scan_step_7">Checking interfaces (7/12)…</string>
-    <string name="scan_step_8">Checking MTU (8/12)…</string>
-    <string name="scan_step_9">Checking local proxy (9/12)…</string>
-    <string name="scan_step_10">Checking Fake-IP (10/12)…</string>
-    <string name="scan_step_11">Checking DNS servers (11/12)…</string>
-    <string name="scan_step_12">Analyzing network latency (12/12)…</string>
+    <string name="scan_step_0">Configuring scan (0/13)</string>
+    <string name="scan_step_1">IP &amp; GeoIP Analysis (1/13)…</string>
+    <string name="scan_step_2">Checking for IPv6 leakage (2/13)…</string>
+    <string name="scan_step_3">Checking system VPN (3/13)…</string>
+    <string name="scan_step_4">Checking system Proxies (4/13)…</string>
+    <string name="scan_step_5">Checking packages (5/13)…</string>
+    <string name="scan_step_6">Checking NOT_VPN flag (6/13)…</string>
+    <string name="scan_step_7">Checking interfaces (7/13)…</string>
+    <string name="scan_step_8">Checking MTU (8/13)…</string>
+    <string name="scan_step_9">Checking local proxy (9/13)…</string>
+    <string name="scan_step_10">Checking Fake-IP (10/13)…</string>
+    <string name="scan_step_11">Checking DNS servers (11/13)…</string>
+    <string name="scan_step_12">Analyzing network latency (12/13)…</string>
+    <string name="scan_step_13">Checking IP type (13/13)…</string>
 
     <!-- Scan Results localization -->
     <string name="geo_analysis_title">IP Analysis (GeoIP)</string>
@@ -174,6 +177,14 @@
     <string name="ipv6_leak_desc_clean">Analysis of real IPv6 address leak via unprotected routes.</string>
     <string name="ipv6_leak_fix">Enable the \'Block Non-VPN Traffic\' or \'::/0 forced redirect\' option inside your VPN client settings, disable IPv6 entirely in the mobile APN profile on your Android device, or turn off IPv6 on your home router (SLAAC/DHCPv6).</string>
 
+    <string name="datacenter_check_title">IP Type (Datacenter/Hosting)</string>
+    <string name="datacenter_check_detected">DATACENTER/HOSTING IP! (Provider: %1$s, VPN: %2$s, Proxy: %3$s, Tor: %4$s)</string>
+    <string name="datacenter_check_clean">CLEAN (Residential/Consumer IP, Provider: %1$s, Type: %2$s)</string>
+    <string name="datacenter_check_desc">Checking if your IP address is a known cloud hosting, secondary VPN provider exit, SOCKS proxy egress node or Tor node.</string>
+    <string name="datacenter_check_desc_clean">Checking if the client IP belongs to a cloud datacenter or hosting network node.</string>
+    <string name="datacenter_check_fix">Use a residential proxy egress server (Residential IP Proxy / ISP proxy) or residential VPN tunnel that routes traffic through home consumer ISPs (such as Comcast, ISP, Telecom) rather than cloud servers (like DigitalOcean, AWS, Hetzner, OVH).</string>
+    <string name="datacenter_check_error">Error resolving IP Type: %1$s</string>
+
     <string name="share_report_title">🔍 VPN Inspector Scan Report\n\n</string>
     <string name="share_final_status">Final Status: </string>
     <string name="share_result_detected">🔴 BYPASS DETECTED\n</string>
@@ -220,4 +231,5 @@
     <string name="settings_section_checks_desc">Configure which tests run during scanning (for experienced users).</string>
     <string name="settings_back">Back</string>
     <string name="settings_reset_checks">Reset to Default</string>
+    <string name="api_notice_text">Scanning will send requests to sypexgeo.net, ipify.org, ipapi.is, ipapi.co, ipwho.is, and freeipapi.com to determine your IP/Leak status.</string>
 </resources>

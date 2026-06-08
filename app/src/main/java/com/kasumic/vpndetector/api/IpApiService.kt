@@ -32,6 +32,30 @@ interface IpApiService {
     suspend fun getIpInfoFor(@Path("ip") ip: String): IpApiResponse
 }
 
+data class IpApiIsDatacenter(
+    val datacenter: String?,
+    val domain: String?,
+    val network: String?
+)
+
+data class IpApiIsResponse(
+    val ip: String?,
+    val is_crawler: Boolean?,
+    val is_proxy: Boolean?,
+    val is_vpn: Boolean?,
+    val is_tor: Boolean?,
+    val is_datacenter: Boolean?,
+    val datacenter: IpApiIsDatacenter?
+)
+
+interface IpApiIsService {
+    @GET("/")
+    suspend fun getIpTypeInfo(): IpApiIsResponse
+
+    @GET("/")
+    suspend fun getIpTypeInfoFor(@retrofit2.http.Query("ip") ip: String): IpApiIsResponse
+}
+
 class IPv6FirstDns : Dns {
     override fun lookup(hostname: String): List<InetAddress> {
         return Dns.SYSTEM.lookup(hostname).sortedBy {
@@ -68,4 +92,12 @@ object NetworkClient {
         .build()
 
     val ipApiService: IpApiService = retrofit.create(IpApiService::class.java)
+
+    private val ipApiIsRetrofit = Retrofit.Builder()
+        .baseUrl("https://api.ipapi.is/")
+        .client(okHttpClient)
+        .addConverterFactory(MoshiConverterFactory.create(moshi))
+        .build()
+
+    val ipApiIsService: IpApiIsService = ipApiIsRetrofit.create(IpApiIsService::class.java)
 }

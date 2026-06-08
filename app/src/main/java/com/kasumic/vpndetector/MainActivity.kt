@@ -548,7 +548,8 @@ fun DiagnosticsSettingsSubScreen(
             "check_local_proxies" to R.string.local_proxy_title,
             "check_fake_ip" to R.string.fake_ip_title,
             "check_dns_servers" to R.string.dns_check_title,
-            "check_latency" to R.string.snitch_title
+            "check_latency" to R.string.snitch_title,
+            "check_datacenter" to R.string.datacenter_check_title
         )
 
         key(resetTrigger) {
@@ -1093,6 +1094,17 @@ fun VpnScannerApp(viewModel: MainViewModel = viewModel()) {
         ScanAndActions(
             uiState = uiState,
             onScanClick = { viewModel.startScan() }
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = stringResource(R.string.api_notice_text),
+            color = colors.secondaryText,
+            fontSize = 11.sp,
+            textAlign = TextAlign.Center,
+            lineHeight = 15.sp,
+            modifier = Modifier.padding(horizontal = 12.dp)
         )
     }
 
