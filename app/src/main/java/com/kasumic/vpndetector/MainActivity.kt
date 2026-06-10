@@ -21,9 +21,11 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -36,6 +38,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
@@ -47,6 +51,9 @@ import android.content.Context
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 
 data class AppColors(
     val background: Color,
@@ -109,13 +116,17 @@ class MainActivity : ComponentActivity() {
         if (lang != null) {
             super.attachBaseContext(LocaleHelper.setLocale(newBase, lang))
         } else {
-            super.attachBaseContext(newBase)
+            val systemLanguage = java.util.Locale.getDefault().language
+            val defaultLang = if (systemLanguage == "ru") "ru" else "en"
+            super.attachBaseContext(LocaleHelper.setLocale(newBase, defaultLang))
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val sharedPrefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        val lang = sharedPrefs.getString("app_lang", "ru") ?: "ru"
+        val systemLanguage = java.util.Locale.getDefault().language
+        val defaultLang = if (systemLanguage == "ru") "ru" else "en"
+        val lang = sharedPrefs.getString("app_lang", defaultLang) ?: defaultLang
         LocaleHelper.updateResourcesLegacy(this, lang)
         
         super.onCreate(savedInstanceState)
@@ -128,7 +139,11 @@ class MainActivity : ComponentActivity() {
             }
             val colors = if (isDarkTheme) DarkAppColors else LightAppColors
 
-            CompositionLocalProvider(LocalAppColors provides colors) {
+            val safeUriHandler = remember { SafeUriHandler(this@MainActivity) }
+            CompositionLocalProvider(
+                LocalAppColors provides colors,
+                LocalUriHandler provides safeUriHandler
+            ) {
                 if (!hasCompletedOnboarding) {
                     MyApplicationTheme(darkTheme = isDarkTheme) {
                         Surface(
@@ -220,13 +235,30 @@ fun MainScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit, onPrefsCh
                         unselectedTextColor = colors.navUnselected
                     )
                 )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Info, contentDescription = stringResource(R.string.tab_info)) },
+                    label = { Text(stringResource(R.string.tab_info)) },
+                    selected = selectedTab == 2,
+                    onClick = { 
+                        selectedTab = 2 
+                        sharedPrefs.edit().putInt("selected_tab", 2).apply()
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = colors.navSelectedIcon,
+                        selectedTextColor = colors.navSelectedText,
+                        indicatorColor = colors.navIndicator,
+                        unselectedIconColor = colors.navUnselected,
+                        unselectedTextColor = colors.navUnselected
+                    )
+                )
             }
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
             when (selectedTab) {
                 0 -> VpnScannerApp()
-                1 -> SettingsAndAboutScreen(isDarkTheme, onThemeChange, onPrefsChanged)
+                1 -> SettingsScreen(isDarkTheme, onThemeChange, onPrefsChanged)
+                2 -> AboutScreen()
             }
         }
     }
@@ -234,7 +266,631 @@ fun MainScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit, onPrefsCh
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit, onPrefsChanged: () -> Unit) {
+fun SettingsScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit, onPrefsChanged: () -> Unit) {
+    val colors = LocalAppColors.current
+    var currentSubScreen by rememberSaveable { mutableStateOf<String?>(null) }
+
+    if (currentSubScreen == "checks") {
+        DiagnosticsSettingsSubScreen(
+            colors = colors,
+            onBack = { currentSubScreen = null }
+        )
+    } else if (currentSubScreen == "region") {
+        val context = androidx.compose.ui.platform.LocalContext.current
+        val sharedPrefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val systemLanguage = java.util.Locale.getDefault().language
+        val defaultLang = if (systemLanguage == "ru") "ru" else "en"
+        val currentLang = sharedPrefs.getString("app_lang", defaultLang) ?: defaultLang
+        val defaultRegion = if (systemLanguage == "ru") "RU" else "US"
+        val currentRegion = sharedPrefs.getString("target_region", defaultRegion) ?: defaultRegion
+
+        RegionSelectionSubScreen(
+            currentLang = currentLang,
+            currentRegion = currentRegion,
+            onBack = { currentSubScreen = null },
+            onRegionSelected = { newRegion ->
+                sharedPrefs.edit().putString("target_region", newRegion).apply()
+                currentSubScreen = null
+                onPrefsChanged()
+            }
+        )
+    } else {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(24.dp).verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(Icons.Default.Settings, contentDescription = null, tint = colors.primaryAction, modifier = Modifier.size(64.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(stringResource(R.string.tab_settings), fontSize = 24.sp, color = colors.primaryText, fontWeight = FontWeight.Bold)
+            
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Text(
+                text = stringResource(R.string.settings_section_general),
+                color = colors.secondaryActionText,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.Start)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val sharedPrefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            val systemLanguage = java.util.Locale.getDefault().language
+            val defaultLang = if (systemLanguage == "ru") "ru" else "en"
+            val currentLang = sharedPrefs.getString("app_lang", defaultLang) ?: defaultLang
+            val defaultRegion = if (systemLanguage == "ru") "RU" else "US"
+            val currentRegion = sharedPrefs.getString("target_region", defaultRegion) ?: defaultRegion
+
+            var showLanguageDialog by remember { mutableStateOf(false) }
+
+            Card(
+                modifier = Modifier.fillMaxWidth().border(1.dp, colors.border, RoundedCornerShape(16.dp)),
+                colors = CardDefaults.cardColors(containerColor = colors.surface),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    // Dark Theme Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(stringResource(R.string.dark_theme), color = colors.primaryText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                        Switch(
+                            checked = isDarkTheme,
+                            onCheckedChange = onThemeChange,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = colors.primaryActionText,
+                                checkedTrackColor = colors.primaryAction,
+                                uncheckedThumbColor = colors.secondaryText,
+                                uncheckedTrackColor = colors.border
+                            )
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.border.copy(alpha = 0.5f)))
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Language selection Row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showLanguageDialog = true }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(stringResource(R.string.settings_language), color = colors.primaryText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                            Text(
+                                text = if (currentLang == "ru") "Русский" else "English",
+                                color = colors.secondaryText,
+                                fontSize = 14.sp
+                            )
+                        }
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowDown,
+                            contentDescription = null,
+                            tint = colors.primaryAction
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.border.copy(alpha = 0.5f)))
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Target Region selection Row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { currentSubScreen = "region" }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(stringResource(R.string.settings_target_region), color = colors.primaryText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                            val currentRegionName = remember(currentRegion, currentLang) {
+                                val flag = getFlagEmoji(currentRegion)
+                                val name = getCountryName(currentRegion, currentLang == "ru")
+                                "$flag $name ($currentRegion)"
+                            }
+                            Text(
+                                text = currentRegionName,
+                                color = colors.secondaryText,
+                                fontSize = 14.sp
+                            )
+                        }
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowDown,
+                            contentDescription = null,
+                            tint = colors.primaryAction
+                        )
+                    }
+                }
+            }
+
+            if (showLanguageDialog) {
+                AlertDialog(
+                    onDismissRequest = { showLanguageDialog = false },
+                    containerColor = colors.surface,
+                    title = { Text(stringResource(R.string.settings_language), color = colors.primaryText) },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf("ru" to "Русский", "en" to "English").forEach { (code, name) ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable {
+                                            sharedPrefs.edit().putString("app_lang", code).apply()
+                                            LocaleHelper.updateResourcesLegacy(context, code)
+                                            showLanguageDialog = false
+                                            onPrefsChanged()
+                                        }
+                                        .padding(12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(name, color = colors.primaryText)
+                                    if (currentLang == code) {
+                                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.primaryAction)
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showLanguageDialog = false }) {
+                            Text(stringResource(R.string.dismiss_dialog), color = colors.primaryAction)
+                        }
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Diagnostic checks Navigation Link
+            Text(
+                text = stringResource(R.string.settings_section_checks),
+                color = colors.secondaryActionText,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.Start)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, colors.border, RoundedCornerShape(16.dp))
+                    .clickable { currentSubScreen = "checks" },
+                colors = CardDefaults.cardColors(containerColor = colors.surface),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.settings_section_checks),
+                            color = colors.primaryText,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = stringResource(R.string.settings_section_checks_desc),
+                            color = colors.secondaryText,
+                            fontSize = 13.sp
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = colors.primaryAction
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DiagnosticsSettingsSubScreen(
+    colors: AppColors,
+    onBack: () -> Unit
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val sharedPrefs = remember(context) { context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE) }
+    var resetTrigger by remember { mutableStateOf(0) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Back navigation header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.settings_back),
+                    tint = colors.primaryAction
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = stringResource(R.string.settings_section_checks),
+                fontSize = 20.sp,
+                color = colors.primaryText,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = stringResource(R.string.settings_section_checks_desc),
+            color = colors.secondaryText,
+            fontSize = 13.sp,
+            modifier = Modifier.align(Alignment.Start)
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+
+        val checksList = AppConfig.ALL_CHECKS
+ 
+         key(resetTrigger) {
+             Card(
+                 modifier = Modifier.fillMaxWidth().border(1.dp, colors.border, RoundedCornerShape(16.dp)),
+                 colors = CardDefaults.cardColors(containerColor = colors.surface),
+                 shape = RoundedCornerShape(16.dp)
+             ) {
+                 Column(modifier = Modifier.padding(16.dp)) {
+                     checksList.forEachIndexed { index, module ->
+                         var isChecked by remember { mutableStateOf(sharedPrefs.getBoolean(module.key, module.defaultValue)) }
+ 
+                         Row(
+                             modifier = Modifier
+                                 .fillMaxWidth()
+                                 .clickable {
+                                     val newVal = !isChecked
+                                     sharedPrefs.edit().putBoolean(module.key, newVal).apply()
+                                     isChecked = newVal
+                                 }
+                                 .padding(vertical = 10.dp),
+                             verticalAlignment = Alignment.CenterVertically,
+                             horizontalArrangement = Arrangement.SpaceBetween
+                         ) {
+                             Text(
+                                 text = stringResource(module.titleRes),
+                                 color = colors.primaryText,
+                                 fontSize = 15.sp,
+                                 fontWeight = FontWeight.Medium,
+                                 modifier = Modifier.weight(1f)
+                             )
+                             Switch(
+                                 checked = isChecked,
+                                 onCheckedChange = { newVal ->
+                                     sharedPrefs.edit().putBoolean(module.key, newVal).apply()
+                                     isChecked = newVal
+                                 },
+                                 colors = SwitchDefaults.colors(
+                                     checkedThumbColor = colors.primaryActionText,
+                                     checkedTrackColor = colors.primaryAction,
+                                     uncheckedThumbColor = colors.secondaryText,
+                                     uncheckedTrackColor = colors.border
+                                 )
+                             )
+                         }
+ 
+                         if (index < checksList.size - 1) {
+                             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.border.copy(alpha = 0.3f)))
+                         }
+                     }
+                 }
+             }
+         }
+ 
+         Spacer(modifier = Modifier.height(24.dp))
+ 
+         // Reset Settings Button
+         OutlinedButton(
+             onClick = {
+                 val editor = sharedPrefs.edit()
+                 checksList.forEach { module ->
+                     editor.putBoolean(module.key, module.defaultValue)
+                 }
+                 editor.apply()
+                 resetTrigger++
+             },
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = colors.primaryAction
+            ),
+            border = androidx.compose.foundation.BorderStroke(1.dp, colors.primaryAction.copy(alpha = 0.5f))
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.settings_reset_checks),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+data class TimeDifference(
+    val days: Long,
+    val hours: Long,
+    val minutes: Long,
+    val seconds: Long
+)
+
+fun calculateTimeDifference(): TimeDifference {
+    val now = System.currentTimeMillis()
+    val targetVal = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC")).apply {
+        set(2026, java.util.Calendar.SEPTEMBER, 1, 0, 0, 0)
+        set(java.util.Calendar.MILLISECOND, 0)
+    }.timeInMillis
+    
+    val diff = targetVal - now
+    if (diff <= 0) return TimeDifference(0, 0, 0, 0)
+    
+    val days = diff / (1000 * 60 * 60 * 24)
+    val hours = (diff / (1000 * 60 * 60)) % 24
+    val minutes = (diff / (1000 * 60)) % 60
+    val seconds = (diff / 1000) % 60
+    return TimeDifference(days, hours, minutes, seconds)
+}
+
+@Composable
+fun TimeBox(value: String, label: String) {
+    Card(
+        shape = RoundedCornerShape(6.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF2D2E32)),
+        modifier = Modifier.width(46.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = value,
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.ExtraBold
+            )
+            Text(
+                text = label,
+                color = Color.White.copy(alpha = 0.6f),
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+fun KeepAndroidOpenWidget() {
+    val uriHandler = LocalUriHandler.current
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val colors = LocalAppColors.current
+    val sharedPrefs = remember(context) { context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE) }
+    
+    var showConfirmDialog by remember { mutableStateOf(false) }
+    var isDismissed by remember { mutableStateOf(sharedPrefs.getBoolean("keep_android_open_dismissed", false)) }
+
+    if (isDismissed) return
+
+    // Ticking state
+    var diffTime by remember { mutableStateOf(calculateTimeDifference()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(1000)
+            diffTime = calculateTimeDifference()
+        }
+    }
+
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.keep_android_open_dismiss_confirm_title),
+                    fontWeight = FontWeight.Bold,
+                    color = colors.primaryText
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.keep_android_open_dismiss_confirm_desc),
+                    color = colors.secondaryText
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        sharedPrefs.edit().putBoolean("keep_android_open_dismissed", true).apply()
+                        isDismissed = true
+                        showConfirmDialog = false
+                    }
+                ) {
+                    Text(
+                        text = stringResource(R.string.keep_android_open_dismiss_confirm_yes),
+                        color = Color(0xFFFF4E4E),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showConfirmDialog = false }
+                ) {
+                    Text(
+                        text = stringResource(R.string.keep_android_open_dismiss_confirm_no),
+                        color = colors.secondaryText
+                    )
+                }
+            },
+            containerColor = colors.surface,
+            titleContentColor = colors.primaryText,
+            textContentColor = colors.secondaryText
+        )
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .border(1.dp, Color(0xFFFF4E4E).copy(alpha = 0.4f), RoundedCornerShape(24.dp)),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1F22)),
+        shape = RoundedCornerShape(24.dp)
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            // Dismiss Button (Top End)
+            IconButton(
+                onClick = { showConfirmDialog = true },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Dismiss",
+                    tint = Color.White.copy(alpha = 0.5f)
+                )
+            }
+
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = stringResource(R.string.keep_android_open_title).uppercase(),
+                    color = Color(0xFFFF4E4E),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 2.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = stringResource(R.string.keep_android_open_headline),
+                    color = Color(0xFFFF6B6B),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 26.sp
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .align(Alignment.CenterHorizontally),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFC92A2A)),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp, horizontal = 12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "${diffTime.days}",
+                            color = Color.White,
+                            fontSize = 52.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 0.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Text(
+                            text = stringResource(R.string.keep_android_open_days_remaining).uppercase(),
+                            color = Color.White.copy(alpha = 0.85f),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TimeBox(value = String.format("%02d", diffTime.hours), label = "h")
+                    Text(":", color = Color.White, fontWeight = FontWeight.Bold)
+                    TimeBox(value = String.format("%02d", diffTime.minutes), label = "m")
+                    Text(":", color = Color.White, fontWeight = FontWeight.Bold)
+                    TimeBox(value = String.format("%02d", diffTime.seconds), label = "s")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = stringResource(R.string.keep_android_open_desc),
+                    color = Color(0xFFE2E8F0),
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Button(
+                    onClick = { uriHandler.openUri("https://keepandroidopen.org") },
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFC92A2A),
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.keep_android_open_visit_website),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AboutScreen() {
     val colors = LocalAppColors.current
     var showMethodology by remember { mutableStateOf(false) }
     val uriHandler = LocalUriHandler.current
@@ -247,7 +903,7 @@ fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Uni
         Spacer(modifier = Modifier.height(16.dp))
         Text(stringResource(R.string.app_name), fontSize = 24.sp, color = colors.primaryText, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(stringResource(R.string.version_title), textAlign = TextAlign.Center, color = colors.secondaryText)
+        Text(stringResource(R.string.version_title, AppConfig.VERSION_NAME), textAlign = TextAlign.Center, color = colors.secondaryText)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = stringResource(R.string.source_code),
@@ -257,272 +913,6 @@ fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Uni
             textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
         )
         
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Text(
-            text = stringResource(R.string.settings_section_general),
-            color = colors.secondaryActionText,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.align(Alignment.Start)
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-
-        val context = androidx.compose.ui.platform.LocalContext.current
-        val sharedPrefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        val currentLang = sharedPrefs.getString("app_lang", "ru") ?: "ru"
-        val currentRegion = sharedPrefs.getString("target_region", "RU") ?: "RU"
-
-        var showLanguageDialog by remember { mutableStateOf(false) }
-        var showRegionDialog by remember { mutableStateOf(false) }
-
-        Card(
-            modifier = Modifier.fillMaxWidth().border(1.dp, colors.border, RoundedCornerShape(16.dp)),
-            colors = CardDefaults.cardColors(containerColor = colors.surface),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                // Dark Theme Row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(stringResource(R.string.dark_theme), color = colors.primaryText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                    Switch(
-                        checked = isDarkTheme,
-                        onCheckedChange = onThemeChange,
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = colors.primaryActionText,
-                            checkedTrackColor = colors.primaryAction,
-                            uncheckedThumbColor = colors.secondaryText,
-                            uncheckedTrackColor = colors.border
-                        )
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.border.copy(alpha = 0.5f)))
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Language selection Row
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showLanguageDialog = true }
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text(stringResource(R.string.settings_language), color = colors.primaryText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                        Text(
-                            text = if (currentLang == "ru") "Русский" else "English",
-                            color = colors.secondaryText,
-                            fontSize = 14.sp
-                        )
-                    }
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = null,
-                        tint = colors.primaryAction
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.border.copy(alpha = 0.5f)))
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Target Region selection Row
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showRegionDialog = true }
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text(stringResource(R.string.settings_target_region), color = colors.primaryText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                        Text(
-                            text = when (currentRegion) {
-                                "RU" -> "🇷🇺 Россия (RU)"
-                                "US" -> "🇺🇸 United States (US)"
-                                "DE" -> "🇩🇪 Germany (DE)"
-                                "KZ" -> "🇰🇿 Казахстан (KZ)"
-                                "UA" -> "🇺🇦 Украина (UA)"
-                                else -> "🏳️ $currentRegion"
-                            },
-                            color = colors.secondaryText,
-                            fontSize = 14.sp
-                        )
-                    }
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = null,
-                        tint = colors.primaryAction
-                    )
-                }
-            }
-        }
-
-        if (showLanguageDialog) {
-            AlertDialog(
-                onDismissRequest = { showLanguageDialog = false },
-                containerColor = colors.surface,
-                title = { Text(stringResource(R.string.settings_language), color = colors.primaryText) },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf("ru" to "Русский", "en" to "English").forEach { (code, name) ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .clickable {
-                                        sharedPrefs.edit().putString("app_lang", code).apply()
-                                        LocaleHelper.updateResourcesLegacy(context, code)
-                                        showLanguageDialog = false
-                                        onPrefsChanged()
-                                    }
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(name, color = colors.primaryText)
-                                if (currentLang == code) {
-                                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.primaryAction)
-                                }
-                            }
-                        }
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = { showLanguageDialog = false }) {
-                        Text(stringResource(R.string.dismiss_dialog), color = colors.primaryAction)
-                    }
-                }
-            )
-        }
-
-        if (showRegionDialog) {
-            var customCodeInput by remember { mutableStateOf(if (currentRegion !in listOf("RU", "US", "DE", "KZ", "UA")) currentRegion else "") }
-            var isCustomClicked by remember { mutableStateOf(currentRegion !in listOf("RU", "US", "DE", "KZ", "UA")) }
-            var isValError by remember { mutableStateOf(false) }
-
-            AlertDialog(
-                onDismissRequest = { showRegionDialog = false },
-                containerColor = colors.surface,
-                title = { Text(stringResource(R.string.settings_target_region), color = colors.primaryText) },
-                text = {
-                    Column(
-                        modifier = Modifier.verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        val presets = listOf(
-                            "RU" to "🇷🇺 Россия (RU)",
-                            "US" to "🇺🇸 United States (US)",
-                            "DE" to "🇩🇪 Germany (DE)",
-                            "KZ" to "🇰🇿 Казахстан (KZ)",
-                            "UA" to "🇺🇦 Украина (UA)"
-                        )
-
-                        presets.forEach { (code, name) ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .clickable {
-                                        sharedPrefs.edit().putString("target_region", code).apply()
-                                        showRegionDialog = false
-                                        onPrefsChanged()
-                                    }
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(name, color = colors.primaryText)
-                                if (!isCustomClicked && currentRegion == code) {
-                                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.primaryAction)
-                                }
-                            }
-                        }
-
-                        // Custom option
-                        Column {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .clickable { isCustomClicked = true }
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(stringResource(R.string.custom_region_label), color = colors.primaryText)
-                                if (isCustomClicked) {
-                                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.primaryAction)
-                                }
-                            }
-
-                            if (isCustomClicked) {
-                                OutlinedTextField(
-                                    value = customCodeInput,
-                                    onValueChange = {
-                                        if (it.length <= 2) {
-                                            customCodeInput = it.uppercase().filter { ch -> ch.isLetter() }
-                                            isValError = false
-                                        }
-                                    },
-                                    placeholder = { Text("US") },
-                                    singleLine = true,
-                                    isError = isValError,
-                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = colors.primaryAction,
-                                        unfocusedBorderColor = colors.border,
-                                        focusedLabelColor = colors.primaryAction,
-                                        unfocusedLabelColor = colors.secondaryText
-                                    )
-                                )
-                                if (isValError) {
-                                    Text(
-                                        text = stringResource(R.string.custom_region_error),
-                                        color = MaterialTheme.colorScheme.error,
-                                        fontSize = 12.sp,
-                                        modifier = Modifier.padding(start = 12.dp, top = 4.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                },
-                confirmButton = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        TextButton(onClick = { showRegionDialog = false }) {
-                            Text(stringResource(R.string.dismiss_dialog), color = colors.primaryAction)
-                        }
-                        if (isCustomClicked) {
-                            Spacer(modifier = Modifier.width(8.dp))
-                            TextButton(onClick = {
-                                if (customCodeInput.length != 2) {
-                                    isValError = true
-                                } else {
-                                    sharedPrefs.edit().putString("target_region", customCodeInput).apply()
-                                    showRegionDialog = false
-                                    onPrefsChanged()
-                                }
-                            }) {
-                                Text(stringResource(R.string.btn_save_and_continue), color = colors.primaryAction, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    }
-                }
-            )
-        }
-
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(stringResource(R.string.about_app_title), color = colors.secondaryActionText, fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
@@ -549,6 +939,32 @@ fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Uni
             MethodologyBullet(stringResource(R.string.bullet_local_proxy_title), stringResource(R.string.bullet_local_proxy_desc), colors)
             MethodologyBullet(stringResource(R.string.bullet_fake_ip_title), stringResource(R.string.bullet_fake_ip_desc), colors)
             MethodologyBullet(stringResource(R.string.bullet_latency_title), stringResource(R.string.bullet_latency_desc), colors)
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, colors.border, RoundedCornerShape(16.dp)),
+            colors = CardDefaults.cardColors(containerColor = colors.surface),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = stringResource(R.string.provider_info_title),
+                    color = colors.primaryText,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.provider_info_desc),
+                    color = colors.secondaryText,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -581,8 +997,8 @@ fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Uni
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            AsyncImage(
-                model = "https://github.com/Kasumicic.png",
+            Image(
+                painter = painterResource(id = R.drawable.github_avatar),
                 contentDescription = "Avatar",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -647,6 +1063,10 @@ fun SettingsAndAboutScreen(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Uni
             }
         }
         
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        KeepAndroidOpenWidget()
+        
         Spacer(modifier = Modifier.height(24.dp))
     }
 
@@ -702,6 +1122,17 @@ fun VpnScannerApp(viewModel: MainViewModel = viewModel()) {
         ScanAndActions(
             uiState = uiState,
             onScanClick = { viewModel.startScan() }
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = stringResource(R.string.api_notice_text),
+            color = colors.secondaryText,
+            fontSize = 11.sp,
+            textAlign = TextAlign.Center,
+            lineHeight = 15.sp,
+            modifier = Modifier.padding(horizontal = 12.dp)
         )
     }
 
@@ -970,242 +1401,42 @@ fun ScanAndActions(uiState: ScannerUiState, onScanClick: () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun OnboardingScreen(
-    isDarkTheme: Boolean,
-    onCompleted: (lang: String, region: String) -> Unit
-) {
-    val colors = LocalAppColors.current
-    var selectedLanguage by remember { mutableStateOf("ru") }
-    var selectedRegion by remember { mutableStateOf("RU") }
-    var customRegionCode by remember { mutableStateOf("") }
-    var isCustomSelected by remember { mutableStateOf(false) }
-    var showError by remember { mutableStateOf(false) }
 
-    val presetRegions = listOf(
-        "RU" to ("🇷🇺 " + (if (selectedLanguage == "ru") "Россия" else "Russia")),
-        "US" to ("🇺🇸 " + (if (selectedLanguage == "ru") "США" else "USA")),
-        "DE" to ("🇩🇪 " + (if (selectedLanguage == "ru") "Германия" else "Germany")),
-        "KZ" to ("🇰🇿 " + (if (selectedLanguage == "ru") "Казахстан" else "Kazakhstan")),
-        "UA" to ("🇺🇦 " + (if (selectedLanguage == "ru") "Украина" else "Ukraine"))
-    )
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.background)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .padding(24.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.Search,
-            contentDescription = null,
-            tint = colors.primaryAction,
-            modifier = Modifier.size(80.dp)
-        )
-        Spacer(modifier = Modifier.height(24.dp))
+fun getFlagEmoji(countryCode: String): String {
+    if (countryCode.length != 2) return "🏳️"
+    val firstChar = countryCode[0].uppercaseChar() - 'A' + 0x1F1E6
+    val secondChar = countryCode[1].uppercaseChar() - 'A' + 0x1F1E6
+    return String(Character.toChars(firstChar)) + String(Character.toChars(secondChar))
+}
 
-        Text(
-            text = if (selectedLanguage == "ru") "Добро пожаловать в VPN Inspector" else "Welcome to VPN Inspector",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = colors.primaryText,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(12.dp))
+fun getCountryName(countryCode: String, isRussian: Boolean): String {
+    val localeOfCountry = java.util.Locale("", countryCode)
+    val displayLocale = if (isRussian) java.util.Locale("ru") else java.util.Locale("en")
+    val name = localeOfCountry.getDisplayCountry(displayLocale)
+    return if (name.isNotEmpty() && name != countryCode) name else countryCode
+}
 
-        Text(
-            text = if (selectedLanguage == "ru") 
-                "Для продолжения выберите язык приложения и целевой регион для проверки GeoIP (страна, в которой вы ожидаете находиться без активного VPN)." 
-                else "Please select your preferred app language and target GeoIP region to start. The target region is the country you expect to be geolocated in when no VPN is active.",
-            fontSize = 14.sp,
-            color = colors.secondaryText,
-            textAlign = TextAlign.Center,
-            lineHeight = 20.sp
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Language block
-        Text(
-            text = if (selectedLanguage == "ru") "Язык приложения / Language" else "Application Language / Язык",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = colors.primaryText,
-            modifier = Modifier.align(Alignment.Start)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            listOf("ru" to "Русский", "en" to "English").forEach { (code, name) ->
-                val isSelected = selectedLanguage == code
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(50.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (isSelected) colors.primaryAction else colors.surface)
-                        .border(1.dp, if (isSelected) colors.primaryAction else colors.border, RoundedCornerShape(12.dp))
-                        .clickable { selectedLanguage = code }
-                        .padding(8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = name,
-                        color = if (isSelected) colors.primaryActionText else colors.primaryText,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-                }
+class SafeUriHandler(private val context: android.content.Context) : androidx.compose.ui.platform.UriHandler {
+    override fun openUri(uri: String) {
+        try {
+            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(uri)).apply {
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Target Region block
-        Text(
-            text = if (selectedLanguage == "ru") "Целевой регион GeoIP / Target Region" else "Target GeoIP Region / Целевой регион",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = colors.primaryText,
-            modifier = Modifier.align(Alignment.Start)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            presetRegions.forEach { (code, name) ->
-                val isSelected = !isCustomSelected && selectedRegion == code
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (isSelected) colors.primaryAction.copy(alpha = 0.15f) else colors.surface)
-                        .border(1.dp, if (isSelected) colors.primaryAction else colors.border, RoundedCornerShape(12.dp))
-                        .clickable {
-                            isCustomSelected = false
-                            selectedRegion = code
-                            showError = false
-                        }
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(text = name, color = colors.primaryText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                    RadioButton(
-                        selected = isSelected,
-                        onClick = {
-                            isCustomSelected = false
-                            selectedRegion = code
-                            showError = false
-                        },
-                        colors = RadioButtonDefaults.colors(selectedColor = colors.primaryAction, unselectedColor = colors.secondaryText)
-                    )
-                }
+            context.startActivity(intent)
+        } catch (e: android.content.ActivityNotFoundException) {
+            val systemLanguage = java.util.Locale.getDefault().language
+            val defaultLang = if (systemLanguage == "ru") "ru" else "en"
+            val lang = context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE).getString("app_lang", defaultLang) ?: defaultLang
+            val msg = if (lang == "ru") {
+                "Браузер не найден для открытия ссылки"
+            } else {
+                "No browser found to open link"
             }
-
-            // Custom Region Option
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(if (isCustomSelected) colors.primaryAction.copy(alpha = 0.15f) else colors.surface)
-                    .border(1.dp, if (isCustomSelected) colors.primaryAction else colors.border, RoundedCornerShape(12.dp))
-                    .clickable {
-                        isCustomSelected = true
-                        showError = false
-                    }
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = if (selectedLanguage == "ru") "Другой (свой код)" else "Other (Custom code)",
-                    color = colors.primaryText,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                RadioButton(
-                    selected = isCustomSelected,
-                    onClick = {
-                        isCustomSelected = true
-                        showError = false
-                    },
-                    colors = RadioButtonDefaults.colors(selectedColor = colors.primaryAction, unselectedColor = colors.secondaryText)
-                )
-            }
-        }
-
-        if (isCustomSelected) {
-            Spacer(modifier = Modifier.height(12.dp))
-            OutlinedTextField(
-                value = customRegionCode,
-                onValueChange = { input ->
-                    if (input.length <= 2) {
-                        customRegionCode = input.uppercase().filter { it.isLetter() }
-                        showError = false
-                    }
-                },
-                label = { Text(if (selectedLanguage == "ru") "Код страны (2 буквы, например US)" else "Country code (2 letters, e.g. US)") },
-                placeholder = { Text("US") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                isError = showError,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = colors.primaryAction,
-                    unfocusedBorderColor = colors.border,
-                    focusedLabelColor = colors.primaryAction,
-                    unfocusedLabelColor = colors.secondaryText
-                )
-            )
-            if (showError) {
-                Text(
-                    text = if (selectedLanguage == "ru") "Код страны должен состоять ровно из 2 букв" else "Country code must be exactly 2 letters",
-                    color = MaterialTheme.colorScheme.error,
-                    fontSize = 12.sp,
-                    modifier = Modifier.align(Alignment.Start).padding(top = 4.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = {
-                val region = if (isCustomSelected) {
-                    if (customRegionCode.length != 2) {
-                        showError = true
-                        return@Button
-                    }
-                    customRegionCode
-                } else {
-                    selectedRegion
-                }
-                onCompleted(selectedLanguage, region)
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = colors.primaryAction,
-                contentColor = colors.primaryActionText
-            ),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Text(
-                text = if (selectedLanguage == "ru") "Сохранить и продолжить" else "Save and Continue",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
+            android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            // catch any other issues
         }
     }
 }
+

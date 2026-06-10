@@ -173,7 +173,11 @@ fun MethodologyViewerScreen(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val sharedPrefs = remember(context) { context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE) }
-    val currentLang = remember(sharedPrefs) { sharedPrefs.getString("app_lang", "ru") ?: "ru" }
+    val currentLang = remember(sharedPrefs) {
+        val systemLanguage = java.util.Locale.getDefault().language
+        val defaultLang = if (systemLanguage == "ru") "ru" else "en"
+        sharedPrefs.getString("app_lang", defaultLang) ?: defaultLang
+    }
     val isEnglish = currentLang != "ru"
 
     val sections = remember(isEnglish) {

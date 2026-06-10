@@ -1,8 +1,9 @@
 <resources>
     <string name="app_name">VPN Inspector</string>
     <string name="tab_scan">Scan</string>
-    <string name="tab_settings">Settings &amp; Info</string>
-    <string name="version_title">Version 1.5</string>
+    <string name="tab_settings">Settings</string>
+    <string name="tab_info">Info</string>
+    <string name="version_title">Version %1$s</string>
     <string name="source_code">Source Code</string>
     <string name="dark_theme">Dark Theme</string>
     <string name="about_app_title">About Application</string>
@@ -29,7 +30,9 @@
     <string name="bullet_fake_ip_title">• IP Spoofing</string>
     <string name="bullet_fake_ip_desc">Checking if fake local IP addresses are returned to domains (Fake-IP tunneling).</string>
     <string name="bullet_latency_title">• Network Latencies (SNITCH)</string>
-    <string name="bullet_latency_desc">Comparison of ping to national (RU) and European (EU) nodes.</string>
+    <string name="bullet_latency_desc">Comparison of ping to local and remote nodes.</string>
+    <string name="bullet_datacenter_title">• Datacenter &amp; Hosting Detection</string>
+    <string name="bullet_datacenter_desc">Analyzing if IP belongs to a hosting service/datacenter (IP Type verification).</string>
     
     <string name="btn_read_methodology">Read Manual</string>
     <string name="developer_title">Developer</string>
@@ -50,25 +53,27 @@
     <string name="unknown_val">Unknown</string>
     <string name="checking_val">Checking…</string>
 
-    <string name="scan_step_0">Configuring scan (0/11)</string>
-    <string name="scan_step_1">IP &amp; GeoIP Analysis (1/11)…</string>
-    <string name="scan_step_2">Checking for IPv6 leakage (2/11)…</string>
-    <string name="scan_step_3">Checking system VPN (3/11)…</string>
-    <string name="scan_step_4">Checking system Proxies (4/11)…</string>
-    <string name="scan_step_5">Checking packages (5/11)…</string>
-    <string name="scan_step_6">Checking NOT_VPN flag (6/11)…</string>
-    <string name="scan_step_7">Checking interfaces (7/11)…</string>
-    <string name="scan_step_8">Checking MTU (8/11)…</string>
-    <string name="scan_step_9">Checking local proxy (9/11)…</string>
-    <string name="scan_step_10">Checking Fake-IP (10/11)…</string>
-    <string name="scan_step_11">Analyzing network latency (11/11)…</string>
+    <string name="scan_step_0">Configuring scan (0/13)</string>
+    <string name="scan_step_1">IP &amp; GeoIP Analysis (1/13)…</string>
+    <string name="scan_step_2">Checking for IPv6 leakage (2/13)…</string>
+    <string name="scan_step_3">Checking system VPN (3/13)…</string>
+    <string name="scan_step_4">Checking system Proxies (4/13)…</string>
+    <string name="scan_step_5">Checking packages (5/13)…</string>
+    <string name="scan_step_6">Checking NOT_VPN flag (6/13)…</string>
+    <string name="scan_step_7">Checking interfaces (7/13)…</string>
+    <string name="scan_step_8">Checking MTU (8/13)…</string>
+    <string name="scan_step_9">Checking local proxy (9/13)…</string>
+    <string name="scan_step_10">Checking Fake-IP (10/13)…</string>
+    <string name="scan_step_11">Checking DNS servers (11/13)…</string>
+    <string name="scan_step_12">Analyzing network latency (12/13)…</string>
+    <string name="scan_step_13">Checking IP type (13/13)…</string>
 
     <!-- Scan Results localization -->
     <string name="geo_analysis_title">IP Analysis (GeoIP)</string>
     <string name="geo_detail_suspicious">Suspicious IP:\nCountry: %1$s</string>
     <string name="geo_detail_clean">Clean IP (Expected region: %1$s)</string>
     <string name="geo_desc">The method determines the IP region on the server side (GeoIP).</string>
-    <string name="geo_fix_suspicious">Use residential proxies or configure split routing (Split Tunneling) to Russian IP addresses.</string>
+    <string name="geo_fix_suspicious">Configure Split Tunneling in your VPN client settings (such as Amnezia VPN, v2rayNG, OpenVPN, WireGuard) and add this application to the exclusion list (Bypass/Excluded Apps). This routes the application\'s traffic directly through the physical WAN interface, bypassing the virtual VPN connection and returning the correct local IP.</string>
     <string name="geo_fix_clean">Circumvention is reliably hidden at the GeoIP level.</string>
     <string name="geo_error_network">Network error</string>
     <string name="geo_error_server">Could not retrieve server response with GeoIP.</string>
@@ -81,14 +86,14 @@
     <string name="direct_vpn_desc">Checking system flag of VPN.</string>
     <string name="direct_vpn_found">VPN DETECTED %1$s</string>
     <string name="direct_vpn_found_desc">The system directly reports an active VPN tunnel.</string>
-    <string name="direct_vpn_fix">Use Proxy mode (bypassing VpnService) or VPN clients with root access (e.g. iptables) for transparent redirection without system flags.</string>
+    <string name="direct_vpn_fix">Use user-space tunneling (User-space SOCKS5/HTTP Proxy, e.g., in-app Proxy Client mode in Daedalus/SagerNet), or leverage transparent proxying via iptables/nftables on a rooted device to bypass the VpnService API entirely.</string>
     <string name="direct_vpn_clean">CLEAN</string>
     <string name="direct_vpn_error">Error: %1$s</string>
 
     <string name="proxy_settings_title">System Proxy settings</string>
     <string name="proxy_settings_found">PROXY DETECTED (%1$s:%2$s)</string>
     <string name="proxy_settings_desc">Detection of system proxy usage based on System.getProperty system properties.</string>
-    <string name="proxy_settings_fix">Disable system proxy settings in Android network settings for traffic to go directly.</string>
+    <string name="proxy_settings_fix">Reset global JVM proxy and APN proxy in system settings of your Access Point Name (APN), or clear system properties http.proxyHost and socksProxyHost via ADB/root command \'settings delete global http_proxy\'.</string>
     <string name="proxy_settings_clean">CLEAN</string>
 
     <string name="not_vpn_title">NOT_VPN flag in Capabilities</string>
@@ -96,13 +101,13 @@
     <string name="not_vpn_no_network">No active network</string>
     <string name="not_vpn_no_data">No connectivity capabilities</string>
     <string name="not_vpn_desc">Indirect evidence. This flag is present in physical network connections and missing when VPN is active.</string>
-    <string name="not_vpn_fix">Use socket-level bypasses that do not register VPN in the system.</string>
+    <string name="not_vpn_fix">Switch the proxy client to pure TCP/UDP socket mode (e.g., SOCKS5 via shared socket libraries bypassing the OS) or apply traffic obfuscation (ByeDPI/TPWS) that acts on application sockets without overriding system Capabilities.</string>
     <string name="not_vpn_clean">CLEAN</string>
 
     <string name="interfaces_title">Network Interfaces</string>
     <string name="interfaces_found">FOUND (%1$s)</string>
     <string name="interfaces_desc">Indirect evidence. Presence of virtual interfaces (tun/tap/wg) may indicate a tunnel.</string>
-    <string name="interfaces_fix">Do not create a tun interface in client settings (use raw socks/http proxy), or rename the interface using root access.</string>
+    <string name="interfaces_fix">Route traffic via SOCKS5/HTTP proxy with built-in translation (such as gost or tun2socks in proxy-server mode without creating a tun interface), or rename the virtual interface in the kernel (via \'ip link set dev tun0 name eth1\') on a rooted device.</string>
     <string name="interfaces_clean">CLEAN</string>
     <string name="interfaces_desc_clean">Indirect check of virtual tunnel adapters.</string>
     <string name="interfaces_error">Failed to read interfaces.</string>
@@ -110,14 +115,14 @@
     <string name="app_packages_title">Application Packages</string>
     <string name="app_packages_found">FOUND (%1$s)</string>
     <string name="app_packages_desc">Direct evidence. Popular installed VPN clients detected.</string>
-    <string name="app_packages_fix">Use custom builds/forks of clients or hide apps using Magisk modules / App Hider.</string>
+    <string name="app_packages_fix">Use custom-built VPN clients with modified package_name identifiers, place applications in a secure partition (Samsung Knox, Private Space in Android 15), or utilize Magisk/KernelSU with Shamiko / Hide My Applist to hide packages from PackageManager.</string>
     <string name="app_packages_clean">CLEAN</string>
     <string name="app_packages_desc_clean">Check for popular installed VPN clients.</string>
 
     <string name="mtu_anomalies_title">MTU Anomalies</string>
     <string name="mtu_low">LOW: %1$s</string>
     <string name="mtu_desc">Indirect evidence. Lowered MTU is typical for tunneled traffic due to header encapsulation.</string>
-    <string name="mtu_fix">Adjust the MTU of the virtual interface to standard values (1420-1500) in advanced VPN client settings.</string>
+    <string name="mtu_fix">Set standard MTU (1500 for Wi-Fi/Ethernet, or 1410-1430 for mobile networks) in the tunnel configuration file (e.g., \'MTU = 1500\' in WireGuard profile) or configure backend-side MSS clamping to hide encapsulation overhead.</string>
     <string name="mtu_clean">CLEAN</string>
     <string name="mtu_desc_clean">Analysis of frame size (MTU) for indirect traces of VPN encapsulation.</string>
     <string name="mtu_error">Error: %1$s</string>
@@ -125,29 +130,42 @@
     <string name="local_proxy_title">Local Proxies</string>
     <string name="local_proxy_open">PORTS OPEN (%1$s)</string>
     <string name="local_proxy_desc">Indirect evidence. Open ports can indicate a local Proxy/Xray/Socks5 server is running.</string>
-    <string name="local_proxy_fix">Change the default incoming port (1080, 10808) to random dynamic ports (e.g. 49211) in the client configuration.</string>
+    <string name="local_proxy_fix">Change the default incoming ports (1080, 10808, 9050) in your in-app proxy client JSON config (Xray/SagerNet/v2ray) to random high ports in the Ephemeral range (49152–65535) and bind to loopback (127.0.0.1) only.</string>
     <string name="local_proxy_clean">CLEAN</string>
     <string name="local_proxy_desc_clean">Analysis of open local ports typical for proxy clients.</string>
 
     <string name="fake_ip_title">Fake-IP Spoofing</string>
     <string name="fake_ip_detected">DETECTED (%1$s)</string>
     <string name="fake_ip_desc">Indirect evidence. The VPN core (e.g. Xray/sing-box) spoofs IPs to intercept traffic.</string>
-    <string name="fake_ip_fix">Disable Fake-IP function in DNS settings (switch to Real-IP, redir-host or remote DNS).</string>
+    <string name="fake_ip_fix">Disable the Fake-IP mechanism in your client profile (e.g., in Clash/sing-box) and switch to Real-IP mode, configuring Direct-DNS routing or forwarding queries to a local recursive DNS resolver.</string>
     <string name="fake_ip_clean">CLEAN</string>
     <string name="fake_ip_desc_clean">Checking for fake internal IP addresses mapping to popular servers (Fake-IP tunneling).</string>
+
+    <string name="dns_check_title">DNS Server Check</string>
+    <string name="dns_no_network">No active network</string>
+    <string name="dns_no_data">No data</string>
+    <string name="dns_no_servers">No DNS servers detected</string>
+    <string name="dns_found_servers">DNS: %1$s</string>
+    <string name="dns_custom_detected">NON-PROVIDER DNS IP: %1$s (Detected non-provider/public DNS: %2$s)</string>
+    <string name="dns_clean">CLEAN (Provider DNS servers: %1$s)</string>
+    <string name="dns_desc">Indirect evidence. Usage of public/custom DNS servers (like Google, Cloudflare, etc.) or VPN DNS ranges suggests DNS routing detour.</string>
+    <string name="dns_desc_clean">Checking for custom, public (Google, Cloudflare, Quad9, etc.) or VPN-assigned DNS servers.</string>
+    <string name="dns_fix">Turn off custom DNS/Private DNS in Android system settings, revert to automatic DNS from the ISP via DHCP/SLAAC, and instead use encrypted DNS tunnels (DoH/DoT) inside your VPN tunnel configuration without modifying global system resolvers.</string>
 
     <string name="snitch_title">Network Latencies (SNITCH)</string>
     <string name="snitch_timeout">Timeout (network unavailable)</string>
     <string name="snitch_desc_rtt">Analysis of RTT to control landmarks.</string>
     <string name="snitch_timeout_fix">Network unavailable or ports blocked.</string>
-    <string name="snitch_intercept">PROXY INTERCEPT (RU:%1$sms / EU:%2$sms)</string>
+    <string name="snitch_intercept">PROXY INTERCEPT (Local:%1$sms / Remote:%2$sms)</string>
     <string name="snitch_intercept_desc">Too low ping (&lt;= 2ms) is impossible in real networks and indicates TCP intercept by a local proxy.</string>
-    <string name="snitch_intercept_fix">Exclude verification hosts from TUN/Proxy intercept (use direct routing).</string>
-    <string name="snitch_anomaly">ANOMALY (RU:%1$sms / EU:%2$sms)</string>
-    <string name="snitch_anomaly_desc">Abnormally high latency to local (RU) node compared to foreign (EU) node indicates VPN usage.</string>
-    <string name="snitch_anomaly_fix">Disconnect VPN or add local hosts (ya.ru) to exclusions.</string>
-    <string name="snitch_clean">Within norm (RU:%1$sms / EU:%2$sms)</string>
-    <string name="snitch_desc_rtt_clean">Comparing ping (TCP RTT) for national and foreign nodes.</string>
+    <string name="snitch_intercept_fix">Add check hosts (google.com, cloudflare.com) to your routing exclusions (bypass-rules) in the proxy client, so that packet roundtrips bypass the local interception sockets and travel natively.</string>
+    <string name="snitch_anomaly">ANOMALY (Local:%1$sms / Remote:%2$sms)</string>
+    <string name="snitch_anomaly_desc">Abnormally high latency to local node compared to remote node indicates VPN usage.</string>
+    <string name="snitch_anomaly_fix">Connect to ultra-low latency entry nodes closest to your physical location, use lightweight protocols (WireGuard/AmneziaWG instead of OpenVPN TCP), or configure direct routing exemptions for latency-measured host addresses.</string>
+    <string name="snitch_clean">Within norm (Local:%1$sms / Remote:%2$sms)</string>
+    <string name="snitch_desc_rtt_clean">Comparing ping (TCP RTT) for local and remote nodes.</string>
+    <string name="snitch_intercept_single">PROXY INTERCEPT (Ping: %1$sms)</string>
+    <string name="snitch_clean_single">Within norm (Ping: %1$sms)</string>
 
     <string name="ipv6_leak_title">IPv6 Leak</string>
     <string name="ipv6_leak_detected">LEAK! IPv4 is encrypted (%1$s), but IPv6 goes directly (%2$s, Country: %3$s)</string>
@@ -159,7 +177,15 @@
     <string name="ipv6_leak_clean_not_supported">CLEAN (IPv6 is not supported or blocked by tunnel)</string>
     <string name="ipv6_leak_desc">Determining real IPv6 address leak. Common VPN vulnerability where IPv6 traffic goes around the tunnel.</string>
     <string name="ipv6_leak_desc_clean">Analysis of real IPv6 address leak via unprotected routes.</string>
-    <string name="ipv6_leak_fix">Disable IPv6 in your mobile network settings or router settings. Some VPN clients also allow forced blocking of non-tunneled IPv6 traffic.</string>
+    <string name="ipv6_leak_fix">Enable the \'Block Non-VPN Traffic\' or \'::/0 forced redirect\' option inside your VPN client settings, disable IPv6 entirely in the mobile APN profile on your Android device, or turn off IPv6 on your home router (SLAAC/DHCPv6).</string>
+
+    <string name="datacenter_check_title">IP Type (Datacenter/Hosting)</string>
+    <string name="datacenter_check_detected">DATACENTER/HOSTING IP! (Provider: %1$s, VPN: %2$s, Proxy: %3$s, Tor: %4$s)</string>
+    <string name="datacenter_check_clean">CLEAN (Residential/Consumer IP, Provider: %1$s, Type: %2$s)</string>
+    <string name="datacenter_check_desc">Checking if your IP address is a known cloud hosting, secondary VPN provider exit, SOCKS proxy egress node or Tor node.</string>
+    <string name="datacenter_check_desc_clean">Checking if the client IP belongs to a cloud datacenter or hosting network node.</string>
+    <string name="datacenter_check_fix">Use a residential proxy egress server (Residential IP Proxy / ISP proxy) or residential VPN tunnel that routes traffic through home consumer ISPs (such as Comcast, ISP, Telecom) rather than cloud servers (like DigitalOcean, AWS, Hetzner, OVH).</string>
+    <string name="datacenter_check_error">Error resolving IP Type: %1$s</string>
 
     <string name="share_report_title">🔍 VPN Inspector Scan Report\n\n</string>
     <string name="share_final_status">Final Status: </string>
@@ -187,6 +213,27 @@
     <string name="custom_region_label">Custom country code (e.g. US, DE)</string>
     <string name="custom_region_placeholder">ISO 2-letter code</string>
     <string name="custom_region_error">Country code must be exactly 2 letters (e.g. US)</string>
+    <string name="search_placeholder">Search country or enter code...</string>
     <string name="support_star_title">Please support the project with a star! ⭐</string>
     <string name="support_star_desc">If you like this application and find it useful, please support us by starring our repository on GitHub.</string>
+    
+    <!-- Keep Android Open Campaign Strings -->
+    <string name="keep_android_open_title">Save Android!</string>
+    <string name="keep_android_open_headline">Android Freedom is Under Threat</string>
+    <string name="keep_android_open_desc">Starting September 2026, a silent update from Google will block every Android app whose developer hasn\'t registered with Google, signed their contract, paid a fee, and identified themselves using a government ID.</string>
+    <string name="keep_android_open_days_remaining">days until lockdown</string>
+    <string name="keep_android_open_visit_website">Visit keepandroidopen.org</string>
+    <string name="keep_android_open_dismiss_confirm_title">Dismiss Banner?</string>
+    <string name="keep_android_open_dismiss_confirm_desc">You can hide this banner. Detailed information is always available on the campaign website.</string>
+    <string name="keep_android_open_dismiss_confirm_yes">Yes, dismiss</string>
+    <string name="keep_android_open_dismiss_confirm_no">Cancel</string>
+    
+    <!-- Settings Checks Toggles -->
+    <string name="settings_section_checks">Diagnostic Checks</string>
+    <string name="settings_section_checks_desc">Configure which tests run during scanning (for experienced users).</string>
+    <string name="settings_back">Back</string>
+    <string name="settings_reset_checks">Reset to Default</string>
+    <string name="api_notice_text">Using independent GeoIP providers. Additional requests are sent to external latency nodes (SNITCH) to measure network delays. See details in the Info tab.</string>
+    <string name="provider_info_title">Network APIs &amp; Hosts Used</string>
+    <string name="provider_info_desc">To perform scanning and analyze connection quality, independent public services are used:\n\n• sypexgeo.net, ipify.org, ipapi.is, ipapi.co, ipwho.is, freeipapi.com — external GeoIP API providers to determine your current IP and check for route leaks.\n\n• google.com — latency testing endpoint for measuring round-trip time (RTT/SNITCH).\n\n• ya.ru (Yandex) — additional latency endpoint used specifically when target region is set to Russia (RU) to detect traffic routing anomalies indicating the presence of a bypass tool.</string>
 </resources>

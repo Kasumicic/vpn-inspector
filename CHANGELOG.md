@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0] - Tab Separation, Modular Scans, Custom DNS Checks & Privacy Disclosure
+
+### 🔬 What's New:
+- **Centralized Scanner Configuration & Dynamic Ordering**: Engineered a unified single-source-of-truth configuration class `AppConfig` mapping module keys, title allocations, default parameters, and step sequencing keys in one place. Aligned the UI module checklist to dynamically render matches, positioning the **IP Type (Datacenter)** check second in both execution pipeline and settings.
+- **Dynamic Application Versioning**: Centralized the release version parameterizing within `AppConfig.VERSION_NAME`, dynamically projecting it to localized string resources on the About screen (`version_title`) to prevent code maintenance drift.
+- **Clean Split of Settings and Info Tabs**: Divided the previously cluttered views into two cleanly separated dashboard tabs. **Settings** now focuses purely on diagnostics and preference configurations, while **Info** aggregates information on methodologies, developers, and network access points.
+- **Dynamic Module Selector**: Implemented granular control over diagnostic checks. Users can now individually toggle, activate, or bypass specific scanner modules (such as Local Ports, MTU, or DNS checks) based on personal preference or network speed.
+- **Comprehensive DNS Server Checks**: Integrated a system-level DNS scanning module (`DnsServerCheck`) that reads active `LinkProperties` to verify default resolvers and highlight any third-party or custom routing servers.
+- **Separate Language Selector Window**: Engineered a separate, beautifully polished modal layout for choosing language preferences (RU/EN), supporting immediate reactive UI translations via `LocaleHelper`.
+- **Privacy & External Host Service Card**: Added a dedicated informational disclosure card explaining all third-party endpoints utilized during scans (including external GeoIP engines like Sypex Geo and remote SNITCH endpoints like Google and Yandex).
+- **Dynamic SNITCH Logic Optimization**: 
+  - For non-RU targets/regions, skipped Russian-specific website checks entirely, executing only the proxy interception test on remote global endpoints (Google/Cloudflare).
+  - Streamlined English UI strings to swap regional "RU/EU" identifiers with universal "Local/Remote" terms.
+- **Local Developer Avatar Integration**: Swapped live network-based avatar loading on the About view with an optimized offline local asset `github_avatar.jpg` to minimize startup delays and ensure offline operation.
+- **Fastlane Metadata Refinement**: Standardized Android app listing descriptions (`en-US` and `ru-RU`) with proper empty line formats to avoid formatting issues in markdown-constrained stores like F-Droid. Integrated the official launcher symbol directly into store assets.
+
+### ⚙️ Fixes & Reliability:
+- **Bulletproof Deep Linking (SafeUriHandler)**: Wrapped compose navigation with a robust `SafeUriHandler` interceptor. It seamlessly handles `ActivityNotFoundException` if a routing link is fired on devices without a default browser or with frozen intent routes, avoiding app crashes.
+- **Removed Network Cleartext Vulnerability**: Transitioned the RTT latency (SNITCH) measurements from port `80` (HTTP) to port `443` (HTTPS/TLS) across all target endpoints (`google.com`, `ya.ru`). Completely removed `android:usesCleartextTraffic="true"` from `AndroidManifest.xml` to lock down network security policies.
+
+
 ## [1.5.0] - Real IPv6 Leak Detection Added
 
 ### 🔬 What's New:
