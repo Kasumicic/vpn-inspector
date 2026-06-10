@@ -1,1 +1,1 @@
-Analyse and inspect your network connections, detect leaks, active VPN configs, proxy rules and learn how to bypass or secure them.
+Security auditing tool to detect and analyze VPN/Proxy detection methods
