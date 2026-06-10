@@ -3,7 +3,7 @@
     <string name="tab_scan">Проверка</string>
     <string name="tab_settings">Настройки</string>
     <string name="tab_info">Инфо</string>
-    <string name="version_title">Версия 1.6</string>
+    <string name="version_title">Версия %1$s</string>
     <string name="source_code">Исходный код</string>
     <string name="dark_theme">Тёмная тема</string>
     <string name="about_app_title">О приложении</string>

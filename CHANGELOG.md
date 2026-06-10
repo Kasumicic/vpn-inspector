@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## [1.6.0] - Tab Separation, Modular Scans, Custom DNS Checks & Privacy Disclosure
 
 ### 🔬 What's New:
+- **Centralized Scanner Configuration & Dynamic Ordering**: Engineered a unified single-source-of-truth configuration class `AppConfig` mapping module keys, title allocations, default parameters, and step sequencing keys in one place. Aligned the UI module checklist to dynamically render matches, positioning the **IP Type (Datacenter)** check second in both execution pipeline and settings.
+- **Dynamic Application Versioning**: Centralized the release version parameterizing within `AppConfig.VERSION_NAME`, dynamically projecting it to localized string resources on the About screen (`version_title`) to prevent code maintenance drift.
 - **Clean Split of Settings and Info Tabs**: Divided the previously cluttered views into two cleanly separated dashboard tabs. **Settings** now focuses purely on diagnostics and preference configurations, while **Info** aggregates information on methodologies, developers, and network access points.
 - **Dynamic Module Selector**: Implemented granular control over diagnostic checks. Users can now individually toggle, activate, or bypass specific scanner modules (such as Local Ports, MTU, or DNS checks) based on personal preference or network speed.
 - **Comprehensive DNS Server Checks**: Integrated a system-level DNS scanning module (`DnsServerCheck`) that reads active `LinkProperties` to verify default resolvers and highlight any third-party or custom routing servers.

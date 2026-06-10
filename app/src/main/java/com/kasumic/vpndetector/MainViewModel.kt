@@ -30,7 +30,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun getLocalizedContext(): Context {
         val sharedPrefs = getApplication<Application>().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        val lang = sharedPrefs.getString("app_lang", "ru") ?: "ru"
+        val systemLanguage = java.util.Locale.getDefault().language
+        val defaultLang = if (systemLanguage == "ru") "ru" else "en"
+        val lang = sharedPrefs.getString("app_lang", defaultLang) ?: defaultLang
         return LocaleHelper.setLocale(getApplication(), lang)
     }
 
@@ -58,26 +60,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val scanResults = mutableListOf<ScanResult>()
             val sharedPrefs = getApplication<Application>().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
 
-            val isGeoEnabled = sharedPrefs.getBoolean("check_geo", true)
-            val isIpv6LeakEnabled = sharedPrefs.getBoolean("check_ipv6_leak", true)
-            val isDirectApiEnabled = sharedPrefs.getBoolean("check_direct_api", true)
-            val isProxySettingsEnabled = sharedPrefs.getBoolean("check_system_proxy", true)
-            val isVpnAppsEnabled = sharedPrefs.getBoolean("check_vpn_apps", true)
-            val isNotVpnEnabled = sharedPrefs.getBoolean("check_not_vpn_capability", true)
-            val isInterfacesEnabled = sharedPrefs.getBoolean("check_interfaces", true)
-            val isMtuEnabled = sharedPrefs.getBoolean("check_mtu_anomalies", true)
-            val isLocalProxiesEnabled = sharedPrefs.getBoolean("check_local_proxies", true)
-            val isFakeIpEnabled = sharedPrefs.getBoolean("check_fake_ip", true)
-            val isDnsEnabled = sharedPrefs.getBoolean("check_dns_servers", true)
-            val isLatencyEnabled = sharedPrefs.getBoolean("check_latency", true)
-            val isDatacenterEnabled = sharedPrefs.getBoolean("check_datacenter", true)
-
-            val totalActiveSteps = listOf(
-                isGeoEnabled, isIpv6LeakEnabled, isDirectApiEnabled, isProxySettingsEnabled,
-                isVpnAppsEnabled, isNotVpnEnabled, isInterfacesEnabled, isMtuEnabled,
-                isLocalProxiesEnabled, isFakeIpEnabled, isDnsEnabled, isLatencyEnabled,
-                isDatacenterEnabled
-            ).count { it }
+             // Dynamic check enabled mapping using our central AppConfig list
+             val enabledChecks = AppConfig.ALL_CHECKS.associate { module ->
+                 module.key to sharedPrefs.getBoolean(module.key, module.defaultValue)
+             }
+ 
+             val isGeoEnabled = enabledChecks["check_geo"] == true
+             val isIpv6LeakEnabled = enabledChecks["check_ipv6_leak"] == true
+             val isDirectApiEnabled = enabledChecks["check_direct_api"] == true
+             val isProxySettingsEnabled = enabledChecks["check_system_proxy"] == true
+             val isVpnAppsEnabled = enabledChecks["check_vpn_apps"] == true
+             val isNotVpnEnabled = enabledChecks["check_not_vpn_capability"] == true
+             val isInterfacesEnabled = enabledChecks["check_interfaces"] == true
+             val isMtuEnabled = enabledChecks["check_mtu_anomalies"] == true
+             val isLocalProxiesEnabled = enabledChecks["check_local_proxies"] == true
+             val isFakeIpEnabled = enabledChecks["check_fake_ip"] == true
+             val isDnsEnabled = enabledChecks["check_dns_servers"] == true
+             val isLatencyEnabled = enabledChecks["check_latency"] == true
+             val isDatacenterEnabled = enabledChecks["check_datacenter"] == true
+ 
+             val totalActiveSteps = enabledChecks.values.count { it }
 
             var currentStepIndex = 0
 
