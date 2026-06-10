@@ -26,9 +26,9 @@ To see the application in action, refer to the screenshots below.
 
 ### English Interface
 <div align="center">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/main_en.png" width="300" alt="VPN Inspector Main Screen"/>
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/01_main.png" width="300" alt="VPN Inspector Main Screen"/>
   &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/settings_en.png" width="300" alt="VPN Inspector Settings Screen"/>
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/02_settings.png" width="300" alt="VPN Inspector Settings Screen"/>
 </div>
 
 ---

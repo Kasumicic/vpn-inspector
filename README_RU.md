@@ -26,9 +26,9 @@
 
 ### Русскоязычный интерфейс
 <div align="center">
-  <img src="fastlane/metadata/android/ru-RU/images/phoneScreenshots/main_ru.png" width="300" alt="VPN Inspector Главный экран"/>
+  <img src="fastlane/metadata/android/ru-RU/images/phoneScreenshots/01_main.png" width="300" alt="VPN Inspector Главный экран"/>
   &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="fastlane/metadata/android/ru-RU/images/phoneScreenshots/settings_ru.png" width="300" alt="VPN Inspector Экран настроек"/>
+  <img src="fastlane/metadata/android/ru-RU/images/phoneScreenshots/02_settings.png" width="300" alt="VPN Inspector Экран настроек"/>
 </div>
 
 ---
