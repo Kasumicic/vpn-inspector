@@ -186,6 +186,7 @@
     <string name="datacenter_check_desc_clean">Проверка принадлежности IP к облачным хостингам или дата-центрам.</string>
     <string name="datacenter_check_fix">Маршрутизируйте трафик через резидентные прокси-серверы (Residential IPs) или резидентные VPN-ноды, закрепленные за домашними интернет-провайдерами физических лиц (Билайн, Ростелеком, МТС, Comcast), полностью избегая корпоративных дата-центров (DigitalOcean, AWS, Hetzner, OVH, Selectel).</string>
     <string name="datacenter_check_error">Ошибка проверки типа IP: %1$s</string>
+    <string name="datacenter_check_no_ip">ПРОПУЩЕНО (Предыдущие проверки не определили IP-адрес)</string>
 
     <string name="share_report_title">🔍 VPN Inspector Scan Report\n\n</string>
     <string name="share_final_status">Итоговый статус: </string>

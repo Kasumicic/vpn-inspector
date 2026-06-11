@@ -186,6 +186,7 @@
     <string name="datacenter_check_desc_clean">Checking if the client IP belongs to a cloud datacenter or hosting network node.</string>
     <string name="datacenter_check_fix">Use a residential proxy egress server (Residential IP Proxy / ISP proxy) or residential VPN tunnel that routes traffic through home consumer ISPs (such as Comcast, ISP, Telecom) rather than cloud servers (like DigitalOcean, AWS, Hetzner, OVH).</string>
     <string name="datacenter_check_error">Error resolving IP Type: %1$s</string>
+    <string name="datacenter_check_no_ip">SKIPPED (No valid IP address detected by previous checks)</string>
 
     <string name="share_report_title">🔍 VPN Inspector Scan Report\n\n</string>
     <string name="share_final_status">Final Status: </string>

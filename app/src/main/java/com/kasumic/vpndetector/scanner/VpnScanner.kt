@@ -17,11 +17,14 @@ data class ScanResult(
 
 class VpnScanner(private val context: Context) {
     private var lastIpv4CountryCode: String? = null
+    var detectedIp: String = "—"
+        private set
 
     suspend fun getIpInfo(): Pair<String, List<ScanResult>> {
         val check = GeoCheck(context)
         val geoResult = check.run()
         lastIpv4CountryCode = geoResult.countryCode
+        detectedIp = geoResult.ip
         return Pair(geoResult.ip, geoResult.results)
     }
 
@@ -70,6 +73,10 @@ class VpnScanner(private val context: Context) {
     }
 
     suspend fun checkDatacenter(ip: String?): ScanResult {
-        return DatacenterCheck(context).run(ip)
+        return DatacenterCheck(context).run(ip) { ipFound ->
+            if (detectedIp == "—" || detectedIp == context.getString(com.kasumic.vpndetector.R.string.unknown_val)) {
+                detectedIp = ipFound
+            }
+        }
     }
 }

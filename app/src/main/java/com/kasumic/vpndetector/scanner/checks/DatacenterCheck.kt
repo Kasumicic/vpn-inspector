@@ -9,13 +9,22 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class DatacenterCheck(private val context: Context) {
-    suspend fun run(ip: String?): ScanResult = withContext(Dispatchers.IO) {
+    suspend fun run(ip: String?, onIpDetected: ((String) -> Unit)? = null): ScanResult = withContext(Dispatchers.IO) {
+        if (ip == null || ip.isEmpty() || ip == "—" || ip == context.getString(R.string.unknown_val)) {
+            return@withContext ScanResult(
+                category = ScanCategory.INDIRECT,
+                moduleName = context.getString(R.string.datacenter_check_title),
+                isRisky = false,
+                details = context.getString(R.string.datacenter_check_no_ip),
+                description = context.getString(R.string.datacenter_check_desc_clean),
+                fixSuggestion = ""
+            )
+        }
+
         try {
-            val response = if (ip != null && ip != context.getString(R.string.unknown_val) && ip.isNotEmpty()) {
-                NetworkClient.ipApiIsService.getIpTypeInfoFor(ip)
-            } else {
-                NetworkClient.ipApiIsService.getIpTypeInfo()
-            }
+            val response = NetworkClient.ipApiIsService.getIpTypeInfoFor(ip)
+
+            response.ip?.let { onIpDetected?.invoke(it) }
 
             val isDatacenter = response.is_datacenter == true
             val isVpn = response.is_vpn == true

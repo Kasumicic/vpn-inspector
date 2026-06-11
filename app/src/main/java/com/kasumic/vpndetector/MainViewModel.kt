@@ -50,6 +50,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.value = _uiState.value.copy(
             isScanning = true,
             scanCompleted = false,
+            ipAddress = "—",
             results = emptyList(),
             decision = DecisionState.CLEAN,
             trustScore = 100,
@@ -90,21 +91,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
             _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_0, 0))
 
+            var ip = "—"
+
             if (isGeoEnabled) {
                 currentStepIndex++
                 _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_1, currentStepIndex))
-            }
-            val (ip, ipResults) = localScanner.getIpInfo()
-            if (isGeoEnabled) {
+                val (fetchedIp, ipResults) = localScanner.getIpInfo()
+                ip = fetchedIp
                 scanResults.addAll(ipResults)
+                _uiState.value = _uiState.value.copy(ipAddress = ip, results = scanResults.toList())
             }
-            _uiState.value = _uiState.value.copy(ipAddress = ip, results = scanResults.toList())
 
             if (isDatacenterEnabled) {
                 currentStepIndex++
                 _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_13, currentStepIndex))
                 scanResults.add(localScanner.checkDatacenter(ip))
-                _uiState.value = _uiState.value.copy(results = scanResults.toList())
+                val currentDetected = localScanner.detectedIp
+                if (currentDetected != "—") {
+                    ip = currentDetected
+                }
+                _uiState.value = _uiState.value.copy(ipAddress = ip, results = scanResults.toList())
             }
 
             if (isIpv6LeakEnabled) {
