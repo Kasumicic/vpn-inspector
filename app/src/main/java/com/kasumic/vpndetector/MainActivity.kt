@@ -937,7 +937,6 @@ fun AboutScreen() {
             MethodologyBullet(stringResource(R.string.bullet_interfaces_title), stringResource(R.string.bullet_interfaces_desc), colors)
             MethodologyBullet(stringResource(R.string.bullet_mtu_title), stringResource(R.string.bullet_mtu_desc), colors)
             MethodologyBullet(stringResource(R.string.bullet_local_proxy_title), stringResource(R.string.bullet_local_proxy_desc), colors)
-            MethodologyBullet(stringResource(R.string.bullet_fake_ip_title), stringResource(R.string.bullet_fake_ip_desc), colors)
             MethodologyBullet(stringResource(R.string.bullet_latency_title), stringResource(R.string.bullet_latency_desc), colors)
         }
 

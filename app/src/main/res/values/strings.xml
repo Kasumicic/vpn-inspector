@@ -53,20 +53,19 @@
     <string name="unknown_val">Unknown</string>
     <string name="checking_val">Checking…</string>
 
-    <string name="scan_step_0">Configuring scan (0/13)</string>
-    <string name="scan_step_1">IP &amp; GeoIP Analysis (1/13)…</string>
-    <string name="scan_step_2">Checking for IPv6 leakage (2/13)…</string>
-    <string name="scan_step_3">Checking system VPN (3/13)…</string>
-    <string name="scan_step_4">Checking system Proxies (4/13)…</string>
-    <string name="scan_step_5">Checking packages (5/13)…</string>
-    <string name="scan_step_6">Checking NOT_VPN flag (6/13)…</string>
-    <string name="scan_step_7">Checking interfaces (7/13)…</string>
-    <string name="scan_step_8">Checking MTU (8/13)…</string>
-    <string name="scan_step_9">Checking local proxy (9/13)…</string>
-    <string name="scan_step_10">Checking Fake-IP (10/13)…</string>
-    <string name="scan_step_11">Checking DNS servers (11/13)…</string>
-    <string name="scan_step_12">Analyzing network latency (12/13)…</string>
-    <string name="scan_step_13">Checking IP type (13/13)…</string>
+    <string name="scan_step_0">Configuring scan (0/12)</string>
+    <string name="scan_step_1">IP &amp; GeoIP Analysis (1/12)…</string>
+    <string name="scan_step_2">Checking for IPv6 leakage (2/12)…</string>
+    <string name="scan_step_3">Checking system VPN (3/12)…</string>
+    <string name="scan_step_4">Checking system Proxies (4/12)…</string>
+    <string name="scan_step_5">Checking packages (5/12)…</string>
+    <string name="scan_step_6">Checking NOT_VPN flag (6/12)…</string>
+    <string name="scan_step_7">Checking interfaces (7/12)…</string>
+    <string name="scan_step_8">Checking MTU (8/12)…</string>
+    <string name="scan_step_9">Checking local proxy (9/12)…</string>
+    <string name="scan_step_11">Checking DNS servers (10/12)…</string>
+    <string name="scan_step_12">Analyzing network latency (11/12)…</string>
+    <string name="scan_step_13">Checking IP type (12/12)…</string>
 
     <!-- Scan Results localization -->
     <string name="geo_analysis_title">IP Analysis (GeoIP)</string>

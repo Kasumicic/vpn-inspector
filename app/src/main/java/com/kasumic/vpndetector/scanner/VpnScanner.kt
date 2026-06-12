@@ -60,10 +60,6 @@ class VpnScanner(private val context: Context) {
         return LocalProxyCheck(context).run()
     }
 
-    suspend fun checkFakeIp(): ScanResult {
-        return FakeIpCheck(context).run()
-    }
-
     fun checkDnsServers(): ScanResult {
         return DnsServerCheck(context).run()
     }

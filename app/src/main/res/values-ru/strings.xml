@@ -53,20 +53,19 @@
     <string name="unknown_val">Неизвестно</string>
     <string name="checking_val">Проверка…</string>
 
-    <string name="scan_step_0">Настройка сканирования (0/13)</string>
-    <string name="scan_step_1">Анализ IP и GeoIP (1/13)…</string>
-    <string name="scan_step_2">Проверка утечки IPv6 (2/13)…</string>
-    <string name="scan_step_3">Проверка системного VPN (3/13)…</string>
-    <string name="scan_step_4">Проверка системных Proxy (4/13)…</string>
-    <string name="scan_step_5">Проверка пакетов (5/13)…</string>
-    <string name="scan_step_6">Проверка флага NOT_VPN (6/13)…</string>
-    <string name="scan_step_7">Проверка интерфейсов (7/13)…</string>
-    <string name="scan_step_8">Проверка MTU (8/13)…</string>
-    <string name="scan_step_9">Проверка локального прокси (9/13)…</string>
-    <string name="scan_step_10">Проверка Fake-IP (10/13)…</string>
-    <string name="scan_step_11">Проверка DNS серверов (11/13)…</string>
-    <string name="scan_step_12">Анализ сетевой задержки (12/13)…</string>
-    <string name="scan_step_13">Проверка типа IP (13/13)…</string>
+    <string name="scan_step_0">Настройка сканирования (0/12)</string>
+    <string name="scan_step_1">Анализ IP и GeoIP (1/12)…</string>
+    <string name="scan_step_2">Проверка утечки IPv6 (2/12)…</string>
+    <string name="scan_step_3">Проверка системного VPN (3/12)…</string>
+    <string name="scan_step_4">Проверка системных Proxy (4/12)…</string>
+    <string name="scan_step_5">Проверка пакетов (5/12)…</string>
+    <string name="scan_step_6">Проверка флага NOT_VPN (6/12)…</string>
+    <string name="scan_step_7">Проверка интерфейсов (7/12)…</string>
+    <string name="scan_step_8">Проверка MTU (8/12)…</string>
+    <string name="scan_step_9">Проверка локального прокси (9/12)…</string>
+    <string name="scan_step_11">Проверка DNS серверов (10/12)…</string>
+    <string name="scan_step_12">Анализ сетевой задержки (11/12)…</string>
+    <string name="scan_step_13">Проверка типа IP (12/12)…</string>
 
     <!-- Scan Results localization -->
     <string name="geo_analysis_title">Анализ IP (GeoIP)</string>

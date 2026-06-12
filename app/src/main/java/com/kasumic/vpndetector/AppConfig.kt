@@ -10,8 +10,8 @@ data class CheckModule(
 )
 
 object AppConfig {
-    const val VERSION_NAME = "1.6.1"
-    const val VERSION_CODE = 8
+    const val VERSION_NAME = "1.6.2"
+    const val VERSION_CODE = 9
 
     val ALL_CHECKS = listOf(
         CheckModule(
@@ -63,11 +63,6 @@ object AppConfig {
             key = "check_local_proxies",
             titleRes = R.string.local_proxy_title,
             stepRes = R.string.scan_step_9
-        ),
-        CheckModule(
-            key = "check_fake_ip",
-            titleRes = R.string.fake_ip_title,
-            stepRes = R.string.scan_step_10
         ),
         CheckModule(
             key = "check_dns_servers",

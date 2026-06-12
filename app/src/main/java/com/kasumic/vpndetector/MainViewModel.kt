@@ -75,7 +75,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
              val isInterfacesEnabled = enabledChecks["check_interfaces"] == true
              val isMtuEnabled = enabledChecks["check_mtu_anomalies"] == true
              val isLocalProxiesEnabled = enabledChecks["check_local_proxies"] == true
-             val isFakeIpEnabled = enabledChecks["check_fake_ip"] == true
              val isDnsEnabled = enabledChecks["check_dns_servers"] == true
              val isLatencyEnabled = enabledChecks["check_latency"] == true
              val isDatacenterEnabled = enabledChecks["check_datacenter"] == true
@@ -169,13 +168,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _uiState.value = _uiState.value.copy(results = scanResults.toList())
             }
 
-            if (isFakeIpEnabled) {
-                currentStepIndex++
-                _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_10, currentStepIndex))
-                scanResults.add(localScanner.checkFakeIp())
-                _uiState.value = _uiState.value.copy(results = scanResults.toList())
-            }
-
             if (isDnsEnabled) {
                 currentStepIndex++
                 _uiState.value = _uiState.value.copy(currentScanStatus = getStatusText(R.string.scan_step_11, currentStepIndex))
@@ -211,7 +203,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             when (result.moduleName) {
                                 localContext.getString(R.string.interfaces_title) -> penaltySum += 20 // active virtual ifaces (tun/tap/wg)
                                 localContext.getString(R.string.not_vpn_title) -> penaltySum += 25 // missing NOT_VPN interface capability
-                                localContext.getString(R.string.fake_ip_title) -> penaltySum += 25 // Fake-IP internal addresses (DNS Spoof)
                                 localContext.getString(R.string.snitch_title) -> penaltySum += 25 // Snitch interception latency anomalies
                                 localContext.getString(R.string.local_proxy_title) -> penaltySum += 15 // Active local proxy ports (1080, 10808)
                                 localContext.getString(R.string.mtu_anomalies_title) -> penaltySum += 10 // Reduced MTU packet size
