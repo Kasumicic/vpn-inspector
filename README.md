@@ -16,6 +16,17 @@
     </a>
   </p>
 
+
+<p align="center">
+  <a href="https://apt.izzysoft.de/fdroid/index/apk/com.kasumic.vpndetector">
+    <img src="https://shields.rbtlog.dev/simple/com.kasumic.vpndetector?style=for-the-badge" alt="RB Status" />
+  </a>
+  &nbsp;
+  <a href="https://apt.izzysoft.de/fdroid/index/apk/com.kasumic.vpndetector">
+    <img src="https://img.shields.io/badge/dynamic/json?url=https://dlstats.izzyondroid.org/iod-stats-collector/stats/basic/yearly/rolling.json&query=$.['com.kasumic.vpndetector']&label=Downloads&style=for-the-badge" alt="Downloads" />
+  </a>
+</p>
+
   <p>
     <a href="https://android.com"><img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android" /></a>
     <a href="https://kotlinlang.org"><img src="https://img.shields.io/badge/Kotlin-0095D5?style=for-the-badge&logo=kotlin&logoColor=white" alt="Kotlin" /></a>

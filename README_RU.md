@@ -10,11 +10,22 @@
     <a href="README.md">🇬🇧 Read in English</a>
   </p>
 
-   <p>
+  <p>
     <a href="https://apt.izzysoft.de/fdroid/index/apk/com.kasumic.vpndetector" target="_blank">
       <img alt="Get it on IzzyOnDroid" height="85" src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" />
     </a>
   </p>
+
+
+<p align="center">
+  <a href="https://apt.izzysoft.de/fdroid/index/apk/com.kasumic.vpndetector">
+    <img src="https://shields.rbtlog.dev/simple/com.kasumic.vpndetector?style=for-the-badge" alt="RB Status" />
+  </a>
+  &nbsp;
+  <a href="https://apt.izzysoft.de/fdroid/index/apk/com.kasumic.vpndetector">
+    <img src="https://img.shields.io/badge/dynamic/json?url=https://dlstats.izzyondroid.org/iod-stats-collector/stats/basic/yearly/rolling.json&query=$.['com.kasumic.vpndetector']&label=Downloads&style=for-the-badge" alt="Downloads" />
+  </a>
+</p>
 
   <p>
     <a href="https://android.com"><img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android" /></a>
