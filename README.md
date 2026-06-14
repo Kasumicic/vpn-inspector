@@ -11,6 +11,12 @@
   </p>
 
   <p>
+    <a href="https://apt.izzysoft.de/fdroid/index/apk/com.kasumic.vpndetector" target="_blank">
+      <img alt="Get it on IzzyOnDroid" height="85" src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" />
+    </a>
+  </p>
+
+  <p>
     <a href="https://android.com"><img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android" /></a>
     <a href="https://kotlinlang.org"><img src="https://img.shields.io/badge/Kotlin-0095D5?style=for-the-badge&logo=kotlin&logoColor=white" alt="Kotlin" /></a>
     <img src="https://img.shields.io/badge/Jetpack_Compose-4285F4?style=for-the-badge&logo=android&logoColor=white" alt="Compose" />
