@@ -236,4 +236,9 @@
     <string name="api_notice_text">Using independent GeoIP providers. Additional requests are sent to external latency nodes (SNITCH) to measure network delays. See details in the Info tab.</string>
     <string name="provider_info_title">Network APIs &amp; Hosts Used</string>
     <string name="provider_info_desc">To perform scanning and analyze connection quality, independent public services are used:\n\n• sypexgeo.net, ipify.org, ipapi.is, ipapi.co, ipwho.is, freeipapi.com — external GeoIP API providers to determine your current IP and check for route leaks.\n\n• google.com — latency testing endpoint for measuring round-trip time (RTT/SNITCH).\n\n• ya.ru (Yandex) — additional latency endpoint used specifically when target region is set to Russia (RU) to detect traffic routing anomalies indicating the presence of a bypass tool.</string>
+    <string name="browser_not_found">No browser found to open link</string>
+    <string name="trust_score_label">Trust Score: %1$s%%</string>
+    <string name="settings_dynamic_colors">Material You / Dynamic Colors</string>
+    <string name="settings_dynamic_colors_desc">Apply system dynamic accent colors (Android 12+).</string>
+    <string name="settings_dynamic_colors_unsupported">Material You is only supported on Android 12+.</string>
 </resources>
