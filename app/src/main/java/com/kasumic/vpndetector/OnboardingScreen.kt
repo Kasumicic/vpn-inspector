@@ -29,6 +29,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kasumic.vpndetector.ui.theme.LocalAppColors
+import com.kasumic.vpndetector.ui.theme.AppColors
+import com.kasumic.vpndetector.utils.getCountryName
+import com.kasumic.vpndetector.utils.getFlagEmoji
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

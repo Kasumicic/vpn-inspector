@@ -10,7 +10,7 @@ data class CheckModule(
 )
 
 object AppConfig {
-    const val VERSION_NAME = "1.6.2"
+    const val VERSION_NAME = "1.6.3"
     const val VERSION_CODE = 9
 
     val ALL_CHECKS = listOf(

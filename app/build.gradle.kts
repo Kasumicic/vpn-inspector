@@ -11,8 +11,8 @@ android {
     applicationId = "com.kasumic.vpndetector"
     minSdk = 24
     targetSdk = 34
-    versionCode = 9
-    versionName = "1.6.2"
+    versionCode = 10
+    versionName = "1.6.3"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -106,4 +106,3 @@ dependencies {
   debugImplementation(libs.androidx.compose.ui.tooling)
 
 }
-
