@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.3] - Material You & Adaptive Themed Icon
+
+### 🎨 What's New:
+- **Material You Dynamic Colors**: Added optional wallpaper-based light and dark color schemes on Android 12 and newer, powered by Material 3.
+- **True Adaptive Launcher Icon**: Separated the app artwork into dedicated foreground and background layers so launchers can apply their native circle, squircle, and other masks correctly.
+- **Themed App Icon**: Added a purpose-built monochrome launcher layer for Android 13 and newer, allowing the icon to follow the user's Material You palette.
+
 ## [1.6.0] - Tab Separation, Modular Scans, Custom DNS Checks & Privacy Disclosure
 
 ### 🔬 What's New:
